@@ -1,20 +1,20 @@
 import React from 'react';
 
-const Layout_01 = (props) => {
+const Layout_02 = (props) => {
 
   return (
-    <div id="layout_01">
-      <div className="header">
+    <React.Fragment>
+      <div className="layout_02-header">
         {props.header ? props.header : null}
       </div>
-      <div className="content">
+      <div className="layout_02-content">
         {props.children ? props.children : null}
-        <div className="footer">
+        <div className="layout_02-footer">
           {props.footer ? props.footer : null}
         </div>
       </div>
-    </div>
+    </React.Fragment>
   );
 }
 
-export default Layout_01;
+export default Layout_02;

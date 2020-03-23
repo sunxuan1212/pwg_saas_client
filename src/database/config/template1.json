@@ -49,71 +49,11 @@
         },
         {
             "id": "",
-            "name": "",
-            "template": "",
-            "route": {
-                "path": "/products/",
-                "params": ":id"
-            },
-            "accessControl": {
-                "guest": true,
-                "customer": true,
-                "admin": true
-            },
-            "sections": []
-        },
-        {
-            "id": "",
-            "name": "购物车",
-            "template": "",
-            "route": {
-                "path": "/cart",
-                "params": ""
-            },
-            "accessControl": {
-                "guest": true,
-                "customer": true,
-                "admin": true
-            },
-            "sections": []
-        },
-        {
-            "id": "",
             "name": "主页",
             "template": "",
             "route": {
                 "path": "/main",
                 "params": ""
-            },
-            "accessControl": {
-                "guest": true,
-                "customer": true,
-                "admin": true
-            },
-            "sections": []
-        },
-        {
-            "id": "",
-            "name": "搜索订单",
-            "template": "",
-            "route": {
-                "path": "/orders",
-                "params": ""
-            },
-            "accessControl": {
-                "guest": true,
-                "customer": true,
-                "admin": true
-            },
-            "sections": []
-        },
-        {
-            "id": "",
-            "name": "",
-            "template": "",
-            "route": {
-                "path": "/orders",
-                "params": ":id"
             },
             "accessControl": {
                 "guest": true,

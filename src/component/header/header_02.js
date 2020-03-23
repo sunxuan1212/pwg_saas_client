@@ -1,40 +1,52 @@
 import React, { useState } from 'react';
-import { Menu, Button, Layout } from 'antd';
+import { Drawer, Badge } from 'antd';
 import {
-  AppstoreOutlined,
-  MenuUnfoldOutlined,
-  MenuFoldOutlined,
-  PieChartOutlined,
-  DesktopOutlined,
-  ContainerOutlined,
-  MailOutlined,
-  MenuOutlined
+  MenuOutlined,
+  ShoppingOutlined
 } from '@ant-design/icons';
 
-const { Header, Content, Footer, Sider } = Layout;
-const { SubMenu } = Menu;
-
 const Header_02 = (props) => {
-  const [ menuCollapsed, setMenuCollapsed] = useState(false);
-  const handleMenuOpen = () => {
-    setMenuCollapsed(true)
+  const [ drawerStatus, setDrawerStatus ] = useState(false);
+  const handleDrawerOpen = () => {
+    setDrawerStatus(true)
   }
-  const handleMenuClose = () => {
-    setMenuCollapsed(false)
+  const handleDrawerClose = () => {
+    setDrawerStatus(false)
+  }
+
+  const getNavItem = () => {
+
   }
 
   return (
-    <header id="header_02">
-      <div className="menu-item">
-        <MenuOutlined/>
-      </div>
-      <div className="menu-title">
-        <h3>Title</h3>
-      </div>
-      <div className="menu-item">
-
-      </div>
-    </header>
+    <React.Fragment>
+      <header id="header_02">
+        <div className="menu-item" onClick={handleDrawerOpen}>
+          <MenuOutlined
+            style={{fontSize:"16px"}}
+          />
+        </div>
+        <div className="menu-title">
+          Title
+        </div>
+        <div className="menu-item">
+          <Badge count={1}>
+            <ShoppingOutlined 
+              style={{fontSize:"18px"}}
+            />
+          </Badge>
+        </div>
+      </header>
+      <Drawer
+          title="Menu"
+          placement="left"
+          closable={true}
+          onClose={handleDrawerClose}
+          visible={drawerStatus}
+        >
+          {getNavItem()}
+        </Drawer>
+    </React.Fragment>
   );
 }
 

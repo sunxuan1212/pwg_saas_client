@@ -1,21 +1,26 @@
 import React from 'react';
+import {
+  Route,
+  Switch
+} from 'react-router-dom';
+
 import logo from './logo.svg';
-import './css/App.css';
-import './css/components.css';
 
-import { Layout, Menu } from 'antd';
+import './css/index.css';
 
-// import Component from './component/index.js';
-import Header_01 from './component/header/header_01';
-import Header_02 from './component/header/header_02';
-import Layout_01 from './component/layout/layout_01';
+import * as Component from './component/index.js';
+import Login from './component/page/login';
 
-const { Header, Content, Footer, Sider } = Layout;
+import PrivateRoute from './utils/component/PrivateRoute';
+import PublicRoute from './utils/component/PublicRoute';
+import PageNotFound from './utils/component/PageNotFound';
+
+let Component_Layout = Component['Layout_01'];
+let Component_Header = Component['Header_01'];
+// let Component_Footer = Component['Header_01'];
 
 let objects = require("./database/config/objects.json");
 const App = () => {
-    // console.log("Component",Component)
-    // let Header = Component['Header_01'];
     const getObjects = () => {
       let result = [];
       let objectKeys = Object.keys(objects.objects);
@@ -30,50 +35,26 @@ const App = () => {
       return result;
     }
 
+    const Haha = () => {
+      return (
+        <div>
+          mainnnnnn
+        </div>
+      )
+    }
+
     return (
-      <Layout_01
-        header={(<Header_02/>)}
+      <Component_Layout
+        header={(<Component_Header/>)}
         footer={"footer"}
       >
-          <div id="layout-content">
-            content
-          </div>
-          <div id="layout-footer">
-            footer
-          </div>
-
-      </Layout_01>
+        <Switch>
+            <PrivateRoute exact path={'/'} component={Haha} />
+            <PublicRoute restricted={true} exact path={'/login'} component={Login} />
+            <Route component={PageNotFound} />
+        </Switch>
+      </Component_Layout>
     )
-    // return (
-    //   <Layout_01>
-    //     <Layout className="layout-main">
-    //       <Header_01/>
-    //       <Layout>
-    //         <Content>
-    //           <div id="layout" style={{height:"100%"}}>
-                
-    //             <div>
-    //               Section Header
-    //             </div>
-    //             <div>
-    //               {getObjects()}
-    //               {getObjects()}
-    //               {getObjects()}
-    //               {getObjects()}
-    //               {getObjects()}
-    //               {getObjects()}
-    //               {getObjects()}
-    //               {getObjects()}
-    //             </div>
-                
-    //           </div>
-    //         </Content>
-    //         <Footer>Footer Here</Footer>
-    //       </Layout>
-    //     </Layout>
-
-    //   </Layout_01>
-    // )
 }
 
 export default App;
