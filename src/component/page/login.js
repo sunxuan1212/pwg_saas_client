@@ -1,8 +1,10 @@
 import React from 'react';
-import { useMutation, useLazyQuery } from "@apollo/react-hooks";
+import { useMutation, useApolloClient } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import { Form, Input, Button, Checkbox } from 'antd';
 import { useHistory } from "react-router-dom";
+
+import Loading from '../../utils/component/Loading';
 
 const LOGIN_MUTATION = gql`
     mutation login($user: JSONObject) {
@@ -30,21 +32,25 @@ const tailLayout = {
 };
 
 const Login = (props) => {
+  const apolloClient = useApolloClient();
   let routeHistory = useHistory();
-  const [login] = useMutation(LOGIN_MUTATION,{
+  const [login, {loading}] = useMutation(LOGIN_MUTATION,{
     onCompleted: (result)=>{
+      console.log("logged in",result);
       if (result && result.login && result.login.success) {
+        console.log("logged in",result.login);
         let redirectPath = '/';
-        if (routeHistory.location.state && routeHistory.location.state.from) {
-          redirectPath = routeHistory.location.state.from.pathname
-        }
+        // if (routeHistory.location.state && routeHistory.location.state.from) {
+        //   redirectPath = routeHistory.location.state.from.pathname
+        // }
+        apolloClient.writeData({ data: { user: result.login } })
         routeHistory.push(redirectPath)
       }
     } 
   });
 
-
   const onFinish = values => {
+    console.log("on submit login")
     login({
       variables: { user: values }
     });
@@ -100,6 +106,9 @@ const Login = (props) => {
           </Button>
         </Form.Item>
       </Form>
+      {
+        loading ? <Loading/> : null
+      }
     </div>
   );
 }

@@ -1,12 +1,43 @@
 import React, { useState } from 'react';
-import { Menu } from 'antd';
+import { useMutation, useApolloClient } from "@apollo/react-hooks";
+import gql from "graphql-tag";
 import {
-  MenuOutlined
+  useHistory
+} from "react-router-dom";
+import { NavHashLink as NavLink } from 'react-router-hash-link';
+import { Menu, Divider, Button, Tooltip } from 'antd';
+import {
+  MenuOutlined,
+  ArrowLeftOutlined,
+  LogoutOutlined
 } from '@ant-design/icons';
 
-import CookieAPI from '../../utils/CookieAPI';
+const LOGOUT_MUTATION = gql`
+    mutation logout {
+      logout {
+        success
+        message
+        data
+      }
+    }
+`;
 
 const Header_01 = (props) => {
+  const apolloClient = useApolloClient();
+  let routeHistory = useHistory();
+  const [logout] = useMutation(LOGOUT_MUTATION, {
+    onCompleted: (result) => {
+      if (result && result.logout && result.logout.success) {
+        console.log("logged out")
+        let redirectPath = '/login';
+        // if (routeHistory.location.state && routeHistory.location.state.from) {
+        //   redirectPath = routeHistory.location.state.from.pathname
+        // }
+        apolloClient.writeData({ data: { user: null } })
+        routeHistory.push(redirectPath)
+      }
+    }
+  });
   const [menuCollapsed, setMenuCollapsed] = useState(false);
   const handleMenuOpen = () => {
     setMenuCollapsed(true)
@@ -15,51 +46,95 @@ const Header_01 = (props) => {
     setMenuCollapsed(false)
   }
 
-  let cookieAPI = CookieAPI();
+  const menuItem = [
+    {
+      name: 'Products',
+      icon: null,
+      route: '/products'
+    },
+    {
+      name: 'Inventory',
+      icon: null,
+      route: '/inventory'
+    },
+    {
+      name: 'Orders',
+      icon: null,
+      route: '/orders'
+    },
+    {
+      name: 'Website',
+      icon: null,
+      route: '/website'
+    }
+  ]
+
+  const getMenuItemDisplay = () => {
+    let result = [];
+    menuItem.map((aMenuItem,index)=>{
+      let buttonProps = {
+        shape: 'circle'
+      }
+      if (menuCollapsed) {
+        buttonProps['shape'] = 'circle';
+      }
+      else {
+        buttonProps['type'] = 'link'
+      }
+      result.push(
+        <div className={`header_01-item ${routeHistory.location.pathname == aMenuItem.route ? "header_01-activeLink" : ""}`} key={index} onClick={()=>{
+          routeHistory.push(aMenuItem.route)
+          }}>
+          {
+            menuCollapsed ? 
+            <Tooltip title={aMenuItem.name} placement="right">
+              <Button {...buttonProps}>{aMenuItem.name[0].toUpperCase()}</Button>
+            </Tooltip>
+            : <span className={routeHistory.location.pathname == aMenuItem.route ? "header_01-activeLink" : ""}>{aMenuItem.name}</span>
+          }
+        </div>
+      )
+    });
+    return result;
+  }
 
   return (
-    <header id="header_01">
-      {/* <div onClick={menuCollapsed ? handleMenuClose : handleMenuOpen}>
-          {React.createElement(menuCollapsed ? MenuUnfoldOutlined : MenuFoldOutlined)}
-          <Menu selectable={false} inlineCollapsed={menuCollapsed}>
-            <Menu.Item key="1">
-              <MenuOutlined/>
-            </Menu.Item>
-          </Menu>
-        </div> */}
-      <Menu
-        mode="inline"
-        inlineCollapsed={menuCollapsed}
-        style={{ height: "100%" }}
-        selectable={false}
-      >
-        <Menu.Item key="0">
-          <MenuOutlined onClick={menuCollapsed ? handleMenuClose : handleMenuOpen} />
-        </Menu.Item>
-        <Menu.Item key="1">
-          <MenuOutlined />
-          <span>Products</span>
-        </Menu.Item>
-        <Menu.Item key="2">
-          <MenuOutlined />
-          <span>Inventory</span>
-        </Menu.Item>
-        <Menu.Item key="3">
-          <MenuOutlined />
-          <span>Orders</span>
-        </Menu.Item>
-        <Menu.Item key="4">
-          <MenuOutlined />
-          <span>Website</span>
-        </Menu.Item>
-        <Menu.Item key="5" onClick={({ item, key, keyPath, domEvent })=>{
-            cookieAPI.delete('access-saas');
-            cookieAPI.delete('refresh-saas')
-          }}>
-          <MenuOutlined />
-          <span>Logout</span>
-        </Menu.Item>
-      </Menu>
+    <header id="header_01" data-header-collapsed={menuCollapsed}>
+      <div className="header_01-header">
+        <div className="header_01-item collapse-btn">
+           <Button 
+              shape="circle" 
+              type="link"
+              shape="circle"
+              icon={<ArrowLeftOutlined rotate={menuCollapsed ? 180 : 0} />} 
+              onClick={menuCollapsed ? handleMenuClose : handleMenuOpen}
+            />
+          {/* <ArrowLeftOutlined rotate={menuCollapsed ? 180 : 0} onClick={menuCollapsed ? handleMenuClose : handleMenuOpen} /> */}
+        </div>
+      </div>
+
+      <div className="header_01-content">
+        {getMenuItemDisplay()}
+      </div>
+      <div className="header_01-footer">
+        {
+          menuCollapsed ?
+          <div className="header_01-item">
+              <Tooltip title="Logout" placement="right">
+                <Button 
+                  shape="circle" 
+                  icon={<LogoutOutlined />} 
+                  onClick={() => {
+                    logout()
+                  }}
+              
+                />
+              </Tooltip>
+            </div>
+            : 
+            <div className="header_01-item"><span>Logout</span></div>
+        }
+      </div>
     </header>
   );
 }

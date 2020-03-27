@@ -1,47 +1,40 @@
 import React from 'react';
-import { Route, Redirect } from 'react-router-dom';
-import { useQuery } from "@apollo/react-hooks";
-import { useLocation } from "react-router-dom";
+import { useQuery, useLazyQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
+import { Route, Redirect, useLocation } from 'react-router-dom';
 
-import Loading from './Loading';
-
-const LOGGEDIN_USER = gql`
-  query loggedInUser{
-    loggedInUser{
-        success
-        message
-        data
+const LOGGEDIN_USER_STATE = gql`
+  {
+    user @client {
+      success
+      message
+      data {
+        _id
+        username
+        config_id
+      } 
     }
   }
 `;
 
 const PrivateRoute = ({ component: Component, ...rest }) => {
-  let location = useLocation();
-  const {loading, error, data} = useQuery(LOGGEDIN_USER);
- 
+  let routeLocation = useLocation();
   const defaultRoute = "/login";
 
-  if (loading) {
-    return <Loading/>;
-  }
-  else {
-    if (error) {
-      return null;
-    }
-    return (
-      // Show the component only when the user is logged in
-      // Otherwise, redirect the user to /signin page
-      <Route {...rest} render={props => (
-        data && data.loggedInUser && data.loggedInUser.success ?
-          <Component {...props} />
-          : <Redirect to={{
-                    pathname: defaultRoute,
-                    state: { from: location }
-                }} />
-      )} />
-    );
-  }
+  const { data: { user: data } } = useQuery(LOGGEDIN_USER_STATE);
+
+  return (
+    // Show the component only when the user is logged in
+    // Otherwise, redirect the user to /signin page
+    <Route {...rest} render={props => (
+      data && data.success ?
+        <Component {...props} />
+        : <Redirect to={{
+                  pathname: defaultRoute,
+                  state: { from: routeLocation }
+              }} />
+    )} />
+  );
 };
 
 export default PrivateRoute;

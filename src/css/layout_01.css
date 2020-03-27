@@ -1,4 +1,9 @@
-#layout_01 {
+#layout_01 .box {
+  height: 100%;
+  width: 100%;
+}
+
+#layout_01 .wrapper {
   height: 100%;
   width: 100%;
   display: flex;

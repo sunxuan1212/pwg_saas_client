@@ -4,7 +4,7 @@
     "name": "cart page",
     "template": "",
     "route": {
-        "path": "/cart",
+        "path": "/products",
         "params": ""
     },
     "accessControl": {

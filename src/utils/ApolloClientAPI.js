@@ -1,19 +1,8 @@
-import { ApolloClient } from 'apollo-client';
-import { HttpLink } from 'apollo-link-http';
-import { InMemoryCache } from 'apollo-cache-inmemory';
+import { useApolloClient } from "@apollo/react-hooks";
 import gql from 'graphql-tag';
 
-import {MIDDLETIER_URL} from './Constants';
-
 export default function ApolloClientAPI() {
-  const cache = new InMemoryCache({ addTypename: false });
-  const client = new ApolloClient({
-    cache,
-    link: new HttpLink({
-        uri: MIDDLETIER_URL,
-        credentials: "include"
-    })
-  });
+  const client = useApolloClient();
 
   return {
     query: (query, params={}, callback = null)=>{
