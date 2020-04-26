@@ -1,0 +1,21 @@
+#productForm {
+  height: 100%;
+  width: 100%;
+  /* overflow: hidden; */
+  /* display: flex; */
+  /* flex-direction: column; */
+  /* justify-content: center; */
+  /* align-items: center; */
+}
+
+
+.inventory-table-variant-header {
+  flex-grow: 1;
+  display: flex;
+  align-items: center; 
+  justify-content: space-between;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  word-break: keep-all;
+}

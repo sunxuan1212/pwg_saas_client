@@ -15,7 +15,7 @@ import Login from './component/page/Login';
 import Products from './component/page/Products';
 import Inventory from './component/page/Inventory';
 import Orders from './component/page/Orders';
-import Page_01 from './component/page/Page_01';
+import Page_01 from './component/page/component/Page_01';
 
 import PrivateRoute from './utils/component/PrivateRoute';
 import PublicRoute from './utils/component/PublicRoute';
@@ -41,7 +41,7 @@ const GET_USER_STATE = gql`
   }
 `;
 
-const App = () => {
+const App = (props) => {
   const { data: { user: loggedUser} } = useQuery(GET_USER_STATE);
 
   const getObjects = () => {
@@ -69,7 +69,7 @@ const App = () => {
   return (
     <Component_Layout
       header={loggedUser && loggedUser.success ? (<Component_Header />) : null}
-      footer={loggedUser && loggedUser.success ? "footer" : null}
+      footer={loggedUser && loggedUser.success ? "2020" : null}
     >
       <Switch>
         <PrivateRoute exact path={'/'} component={Haha}/>

@@ -36,6 +36,7 @@
   align-items: center;
   padding-left: 14px;
   transition: 0.4s;
+  cursor: pointer;
 }
 
 .header_01-item span {

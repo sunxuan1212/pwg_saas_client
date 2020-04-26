@@ -24,7 +24,7 @@ const client = new ApolloClient({
 const jsx = (
   <BrowserRouter>
       <ApolloProvider client={client}>
-          <App/>
+          <App />
       </ApolloProvider>
   </BrowserRouter>
 );

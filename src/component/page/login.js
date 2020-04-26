@@ -71,7 +71,7 @@ const Login = (props) => {
         onFinishFailed={onFinishFailed}
       >
         <Form.Item
-          label="Username"
+          label="账号"
           name="username"
           rules={[
             {
@@ -84,7 +84,7 @@ const Login = (props) => {
         </Form.Item>
 
         <Form.Item
-          label="Password"
+          label="密码"
           name="password"
           rules={[
             {
@@ -102,7 +102,7 @@ const Login = (props) => {
 
         <Form.Item {...tailLayout}>
           <Button type="primary" htmlType="submit">
-            Submit
+            登入
           </Button>
         </Form.Item>
       </Form>

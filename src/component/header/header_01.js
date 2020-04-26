@@ -5,12 +5,16 @@ import {
   useHistory
 } from "react-router-dom";
 import { NavHashLink as NavLink } from 'react-router-hash-link';
-import { Menu, Divider, Button, Tooltip } from 'antd';
+import { Menu, Divider, Button, Tooltip, Modal } from 'antd';
 import {
   MenuOutlined,
   ArrowLeftOutlined,
-  LogoutOutlined
+  LogoutOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons';
+import confirmation from '../../utils/component/confirmation';
+
+const { confirm } = Modal;
 
 const LOGOUT_MUTATION = gql`
     mutation logout {
@@ -44,6 +48,12 @@ const Header_01 = (props) => {
   }
   const handleMenuClose = () => {
     setMenuCollapsed(false)
+  }
+
+  const handleLogout = () => {
+    confirmation('confirm', 'Confirm Logout?', ()=>{
+      logout();
+    })
   }
 
   const menuItem = [
@@ -117,23 +127,19 @@ const Header_01 = (props) => {
         {getMenuItemDisplay()}
       </div>
       <div className="header_01-footer">
-        {
-          menuCollapsed ?
-          <div className="header_01-item">
-              <Tooltip title="Logout" placement="right">
-                <Button 
-                  shape="circle" 
-                  icon={<LogoutOutlined />} 
-                  onClick={() => {
-                    logout()
-                  }}
-              
-                />
-              </Tooltip>
-            </div>
-            : 
-            <div className="header_01-item"><span>Logout</span></div>
-        }
+        <div className="header_01-item" onClick={handleLogout}>
+          {
+            menuCollapsed ?
+                <Tooltip title="Logout" placement="right">
+                  <Button 
+                    shape="circle" 
+                    icon={<LogoutOutlined />} 
+                  />
+                </Tooltip>
+              : 
+              <div className="header_01-item"><span>Logout</span></div>
+          }
+        </div>
       </div>
     </header>
   );
