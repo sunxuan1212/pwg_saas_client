@@ -11,7 +11,7 @@ const LOGGEDIN_USER_STATE = gql`
       data {
         _id
         username
-        config_id
+        configId
       } 
     }
   }
@@ -21,13 +21,19 @@ const PrivateRoute = ({ component: Component, ...rest }) => {
   let routeLocation = useLocation();
   const defaultRoute = "/login";
 
-  const { data: { user: data } } = useQuery(LOGGEDIN_USER_STATE);
-
+  const userResult = useQuery(LOGGEDIN_USER_STATE);
+  let loggedIn = false;
+  if (userResult) {
+    const {error, loading, ...getUserResult} = userResult;
+    if (!loading && !error) {
+      loggedIn = !error && !loading && getUserResult.data && getUserResult.data.user && getUserResult.data.user.success ? true : false;
+    }
+  }
   return (
     // Show the component only when the user is logged in
     // Otherwise, redirect the user to /signin page
     <Route {...rest} render={props => (
-      data && data.success ?
+      loggedIn ?
         <Component {...props} />
         : <Redirect to={{
                   pathname: defaultRoute,

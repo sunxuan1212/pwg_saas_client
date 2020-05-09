@@ -28,6 +28,7 @@
   flex-wrap: nowrap;
 }
 
+/* inventoryFormTable */
 .inventoryTable-main .editable-cell {
   position: relative;
 }
@@ -41,8 +42,17 @@
   border: 1px solid #d9d9d9;
   border-radius: 4px;
   padding: 4px 11px;
+  height: 30px;
 }
 
 .inventoryTable-main [data-theme='dark'] .editable-row:hover .editable-cell-value-wrap {
   border: 1px solid #434343;
+  height: 30px;
+
+}
+
+/* orderInfo */
+.orderInfo-item-summary {
+  display: flex;
+  justify-content: flex-end;
 }

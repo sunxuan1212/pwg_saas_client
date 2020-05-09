@@ -1,14 +1,18 @@
 import React, {useState, useEffect} from 'react';
-import { Button, Form, Input, Upload, Modal, Switch, Collapse } from 'antd';
-import { useLazyQuery, useMutation } from "@apollo/react-hooks";
-import { PlusOutlined } from '@ant-design/icons';
+import { Button, Form, Input, Upload, Modal, Switch, Collapse, Select, Divider } from 'antd';
+import { useLazyQuery, useMutation, useApolloClient } from "@apollo/react-hooks";
+import { PlusOutlined, StarOutlined, StarFilled } from '@ant-design/icons';
 import gql from "graphql-tag";
 
 import confirmation from '../../../utils/component/confirmation';
 import InventoryFormTable from './InventoryFormTable';
+
 import qiniuAPI from '../../../utils/qiniuAPI';
+import { getConfig } from '../../../utils/Constants';
+// import ApolloClientAPI from '../../../utils/ApolloClientAPI';
 
 const { Panel } = Collapse;
+const { Option } = Select;
 
 const READ_PRODUCT_INVENTORY_QUERY = gql`
   query inventory($filter: JSONObject) {
@@ -65,6 +69,63 @@ const UPDATE_PRODUCT_QUERY = gql`
   }
 `;
 
+// convert db image obj to match Upload Component format
+const getDefaultImageArray = async (array) => {
+  let config = await getConfig()
+  let imageSrc = config.imageSrc;
+  return array.map((anImage)=>{
+    anImage['uid'] = anImage.name;
+    anImage['url'] = imageSrc + anImage.name;
+    anImage['thumbUrl'] = imageSrc + anImage.name;
+    if (anImage.fav) {
+      //anImage['status'] = 'done';
+    }
+    return anImage;
+  })
+}
+
+// mainly for image upload/delete in qiniu
+const getImageFilesToModify = (defaultArray = [], newArray = []) => {
+  let newImageToUpload = [];
+  let currentUploadedImages = [];
+  let imagesToDelete = []
+  let allImages = []
+
+  newArray.map((anImage,index)=>{
+    // new image to be uploaded
+    let newImageName = anImage.name;
+    if (anImage.originFileObj) {
+      let imageNameSplited = newImageName.split('.');
+      newImageName = `saas_${index}_${new Date().getTime()}_${imageNameSplited[imageNameSplited.length - 2]}.${imageNameSplited[imageNameSplited.length - 1]}`;
+      anImage['name'] = newImageName;
+      newImageToUpload.push(anImage)
+    }
+    // uploaded images
+    else {
+      currentUploadedImages.push(anImage)
+    }
+    // convert Upload Component image obj to match db format
+    allImages.push({
+      name: newImageName,
+      fav: anImage.fav ? anImage.fav : false
+    })
+  });
+
+  defaultArray.map((anImage)=>{
+    let foundIndex = currentUploadedImages.map((anUploadedImage)=>anUploadedImage.name).indexOf(anImage.name);
+    if (foundIndex < 0) {
+      imagesToDelete.push(anImage);
+    }
+  })
+
+  return {
+    upload: newImageToUpload,
+    delete: imagesToDelete,
+    allImages: allImages,
+    uploaded: defaultArray
+  };
+}
+
 function getBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -74,23 +135,34 @@ function getBase64(file) {
   });
 }
 
-const ProductForm = (props) => {
-  const {product = null, refetch, ...modalProps} = props;
+const ProductInfoForm = (props) => {
+  const {product = null, categories, refetch, ...modalProps} = props;
   const fileLimit = 4;
-  const QiniuAPI = qiniuAPI();
 
   const [ form ] = Form.useForm();
   const [ fileList, setFileList ] = useState([]);
   const [ previewVisible, setPreviewVisible ] = useState(false);
-  const [ previewImage, setPreviewImage ] = useState('');
+  const [ previewImage, setPreviewImage ] = useState(null);
 
   // inventory
   const [ inventoryData, setInventoryData ] = useState([]);
+  const [ productCategory, setProductCategory ] = useState(categories);
+  const [ newCategoryName, setNewCategoryName ] = useState('');
   const [ productVariants, setProductVariants ] = useState({'sku': 'SKU'});
 
   useEffect(() => {
     if (product && modalProps.modalVisible) {
-      form.setFieldsValue(product);
+      let productObj = Object.assign({},product);
+      if (product.category && product.category.length > 0) {
+        let newCategoryFormat = product.category.map((aCategory)=>{
+          return {
+            key: aCategory._id,
+            label: aCategory.name
+          }
+        })
+        productObj['category'] = newCategoryFormat;
+      }
+      form.setFieldsValue(productObj);
       if (product.variants) {
         setProductVariants(product.variants)
       }
@@ -101,13 +173,20 @@ const ProductForm = (props) => {
             filter: { productId: product._id }
           }
         }
-      })
+      });
+
+      if (product.images && product.images.length > 0) {
+        const runAsyncFunc = async () => {
+          setFileList(await getDefaultImageArray(product.images))
+        }
+        runAsyncFunc()
+      }
     }
     else {
       form.resetFields();
     }
     modalProps.setModalFooter(getModalFooter());
-
+    
   }, [product, modalProps.modalVisible]);
 
   const uploadButton = (
@@ -118,17 +197,37 @@ const ProductForm = (props) => {
   );
 
   const handleFileListChange = ({ fileList, ...rest }) => {
-    console.log("handleFileListChange",rest)
     console.log("handleFileListChange,fileList",fileList)
-    let result = fileList;
+    let result = fileList.map((aFile)=>{
+      if (aFile.fav) {
+        //aFile['status'] = 'done';
+      }
+      return aFile;
+    });
     if (fileList.length > fileLimit) {
       result = fileList.slice(0, fileLimit-1);
+    }
+    if (result.length > 0) {
+      let foundFavImage = result.find((anImage)=>anImage.fav);
+      if (!foundFavImage) {
+        result[0]['fav'] = true;
+      }
     }
     setFileList(result)
   };
 
-  const handlePreviewClose = () => {
-    setPreviewVisible(false);
+  const handleFavImageChange = () => {
+    let newFileList = [].concat(fileList)
+    newFileList.map((aFile)=>{
+      if (aFile.name == previewImage.name) {
+        aFile['fav'] = true;
+      }
+      else {
+        aFile['fav'] = false;
+      }
+      return aFile;
+    });
+    setFileList(newFileList);
   }
 
   const handlePreviewOpen = async (file) => {
@@ -136,10 +235,14 @@ const ProductForm = (props) => {
       file.preview = await getBase64(file.originFileObj);
     }
     setPreviewVisible(true);
-    setPreviewImage(file.url || file.preview);
+    setPreviewImage(file);
   };
 
-  const [readInventory, { loading: loadingInventory, data: dataInventory }] = useLazyQuery(READ_PRODUCT_INVENTORY_QUERY,{
+  const handlePreviewClose = () => {
+    setPreviewVisible(false);
+  }
+
+  const [readInventory, readInventoryResult ] = useLazyQuery(READ_PRODUCT_INVENTORY_QUERY,{
     fetchPolicy: "cache-and-network",
     onCompleted: (result) => {
       console.log("readInventory result",result)
@@ -163,7 +266,7 @@ const ProductForm = (props) => {
     }
   })
 
-  const [createProduct, {loading, error}] = useMutation(CREATE_NEW_PRODUCT_QUERY,{
+  const [createProduct, createProductResult ] = useMutation(CREATE_NEW_PRODUCT_QUERY,{
     onCompleted: (result) => {
       console.log("createProduct result",result)
       modalProps.onCancel();
@@ -177,7 +280,7 @@ const ProductForm = (props) => {
       refetch();
     }
   })
-  const [updateProduct, {updateLoading, updateError}] = useMutation(UPDATE_PRODUCT_QUERY,{
+  const [updateProduct, updateProductResult ] = useMutation(UPDATE_PRODUCT_QUERY,{
     onCompleted: (result) => {
       console.log("updateProduct result",result)
       modalProps.onCancel();
@@ -185,9 +288,45 @@ const ProductForm = (props) => {
     }
   })
 
-  const onFinish = (values) => {
+  const onFinish = async (values) => {
     console.log("onFinish", values)
-    let finalProductValue = {...values, variants: productVariants}
+    
+    let finalProductValue = {
+      ...values,
+      images: [], 
+      variants: productVariants
+    }
+
+    if (!values._id) {
+      delete finalProductValue._id;
+    }
+    
+    if (values.category) {
+      let foundSelectedCategory = productCategory.find(aCategory=>aCategory._id == values.category.key);
+      if (foundSelectedCategory) {
+        finalProductValue['category'] = [foundSelectedCategory];
+      }
+    }
+    else {
+      finalProductValue['category'] = [];
+    }
+
+    let imagesToBeModified = getImageFilesToModify(product && product.images ? product.images : [], fileList);
+    if (imagesToBeModified.upload.length > 0 || imagesToBeModified.delete.length > 0) {
+      finalProductValue['images'] = imagesToBeModified.allImages;
+    }
+
+    const QiniuAPI = await qiniuAPI();
+
+    if (imagesToBeModified.upload.length > 0) {
+      imagesToBeModified.upload.map(async (aNewImage)=>{
+        await QiniuAPI.upload(aNewImage)
+      })
+    }
+    if (imagesToBeModified.delete.length > 0) {
+      await QiniuAPI.batchDelete(imagesToBeModified.delete.map(anImage=>anImage.name))
+    }
+
     if (!product) {
       createProduct({
         variables: {
@@ -203,10 +342,10 @@ const ProductForm = (props) => {
         }
       })
 
-      console.log("inventoryData",inventoryData)
       let newInventory = [...inventoryData];
       newInventory = newInventory.map((anInventory)=>{
         const { key, ...restInventory} = anInventory;
+
         //delete anInventory.key;
         let variantObj = {}
         Object.keys(productVariants).map((aKey)=>{
@@ -220,8 +359,8 @@ const ProductForm = (props) => {
       });
       console.log("newInventory",newInventory)
       let deletedInventory = []
-      if (dataInventory && dataInventory.inventory) {
-        dataInventory.inventory.map((anInventory)=>{
+      if (readInventoryResult.data && readInventoryResult.data.inventory) {
+        readInventoryResult.data.inventory.map((anInventory)=>{
           let foundInventory = newInventory.map((aNewInventory)=>{return aNewInventory._id}).indexOf(anInventory._id);
           if (foundInventory < 0) {
             deletedInventory.push({...anInventory, deleted: true});
@@ -241,9 +380,29 @@ const ProductForm = (props) => {
   }
 
   const onDeleteProduct = () => {
-    confirmation('confirm',"Confirm delete?",()=>{
+    confirmation('confirm',"Confirm delete?",async ()=>{
+      if (product.images && product.images.length > 0) {
+        const QiniuAPI = await qiniuAPI();
+        await QiniuAPI.batchDelete(product.images.map(anImage=>anImage.name))
+      }
       deleteProduct({variables:{_id: product._id}})
     })
+  }
+
+  // const checkFormTouched = () => {
+  //   console.log('isFieldsTouched',form.isFieldTouched('name'));
+  // }
+
+  const onCategoryNameChange = (e) => {
+    setNewCategoryName(e.target.value);
+  }
+
+  const addNewCategory = () => {
+    setProductCategory([...productCategory, {
+      _id: `category_${newCategoryName}_${new Date().getTime()}`,
+      name: newCategoryName
+    }]);
+    setNewCategoryName('')
   }
 
   const getModalFooter = () => {
@@ -266,18 +425,20 @@ const ProductForm = (props) => {
     return modalFooter;
   }
 
-  // const QiniuAPI = qiniuAPI();
-
+  const getPreviewModalFooter = () => {
+    let isFav = previewImage && previewImage.fav;
+    return (
+      <Button 
+        type={isFav ? 'primary': 'default'} 
+        icon={isFav ? (<StarFilled style={{color: 'gold'}}/>) : (<StarOutlined/>) } 
+        onClick={handleFavImageChange}
+      >
+        Favourite
+      </Button>
+    )
+  } 
   return (
     <div id="productForm">
-      <Button onClick={()=>{
-        console.log('fileList',fileList)
-        QiniuAPI.upload(fileList[0].originFileObj)
-        {/* console.log('QiniuAPI',QiniuAPI) */}
-        {/* QiniuAPI.upload() */}
-        }}>
-        upload test
-      </Button>
       <Collapse 
         defaultActiveKey={['1','2']} 
         //bordered={false}
@@ -291,14 +452,44 @@ const ProductForm = (props) => {
             labelCol={{ span: 5 }} 
             wrapperCol={{ span: 16 }} 
           >
+            <Form.Item name={'_id'} label="ID">
+              <Input />
+            </Form.Item>
             <Form.Item name={'name'} label="Name" rules={[{ required: true }]}>
               <Input />
             </Form.Item>
             <Form.Item name={'description'} label="Description">
               <Input.TextArea rows={4} />
             </Form.Item>
+            <Form.Item name={'category'} label="Category">
+              <Select
+                style={{ width: 240 }}
+                placeholder="Select a category"
+                labelInValue={true}
+                allowClear={true}
+                dropdownRender={menu => (
+                  <div>
+                    {menu}
+                    <Divider style={{ margin: '4px 0' }} />
+                    <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
+                      <Input style={{ flex: 'auto' }} value={newCategoryName} onChange={onCategoryNameChange} required/>
+                      <a
+                        style={{ flex: 'none', padding: '8px', display: 'block', cursor: 'pointer' }}
+                        onClick={addNewCategory}
+                      >
+                        <PlusOutlined /> New
+                      </a>
+                    </div>
+                  </div>
+                )}
+              >
+                {productCategory.map((item, index) => (
+                  <Option key={item._id} value={item._id}>{item.name}</Option>
+                ))}
+              </Select>
+            </Form.Item>
             <Form.Item name={'published'} label="Published" valuePropName="checked">
-              <Switch checkedChildren="On" unCheckedChildren="Off" />
+              <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
             </Form.Item>
 
             <Form.Item name={'images'} label="Images">
@@ -314,11 +505,19 @@ const ProductForm = (props) => {
                   fileList={fileList}
                   onPreview={handlePreviewOpen}
                   onChange={handleFileListChange}
-                >
+                  //showUploadList={{
+                  //  showDownloadIcon: true,
+                  //  downloadIcon: <StarFilled style={{color: 'yellow'}}/>
+                  //}}
+                  className={'productForm-upload'}                >
                   {fileList.length < fileLimit ? uploadButton : null}
                 </Upload>
-                <Modal visible={previewVisible} footer={null} onCancel={handlePreviewClose}>
-                  <img alt="example" style={{ width: '100%' }} src={previewImage} />
+                <Modal 
+                  visible={previewVisible} 
+                  footer={getPreviewModalFooter()} 
+                  onCancel={handlePreviewClose}>
+                {/* <Modal visible={previewVisible} footer={null} onCancel={handlePreviewClose}> */}
+                  <img alt="example" style={{ width: '100%' }} src={previewImage ? previewImage.url || previewImage.thumbUrl : ''} />
                 </Modal>
               </React.Fragment>
             </Form.Item>
@@ -338,9 +537,52 @@ const ProductForm = (props) => {
             </Panel>
           ) : null
         }
+        {/* {
+          product ? (
+            <Panel header="Related Products" key="3">
+              
+            </Panel>
+          ) : null
+        } */}
       </Collapse>
     </div>
   )
 }
 
+const ProductForm = (props) => {
+  const { product, categories = [], modalVisible, refetch, closeModal } = props;
+  const [ modalFooter, setModalFooter ] = useState([]);
+
+  let modalProps = {}
+  if (modalFooter) {
+    modalProps['footer'] = modalFooter;
+  }
+
+  return (
+    <Modal
+        title={product ? product.name : "New Product"}
+        width={'95%'}
+        visible={modalVisible}
+        onCancel={closeModal}
+        destroyOnClose
+        wrapClassName={'products-modalWrapper'}
+        //bodyStyle={{paddingLeft:'0'}} //for left tab
+        style={{overflow:"hidden"}}
+        //bodyStyle={{paddingTop:'0'}}
+        {...modalProps}
+      >
+        <ProductInfoForm
+          // product props
+          product={product} 
+          categories={categories}
+          refetch={refetch}
+
+          // modal props
+          modalVisible={modalVisible}
+          onCancel={closeModal}
+          setModalFooter={setModalFooter}
+        />
+      </Modal>
+  )
+}
 export default ProductForm;

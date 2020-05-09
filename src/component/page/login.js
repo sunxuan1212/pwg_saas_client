@@ -5,6 +5,8 @@ import { Form, Input, Button, Checkbox } from 'antd';
 import { useHistory } from "react-router-dom";
 
 import Loading from '../../utils/component/Loading';
+import { setUser } from '../../utils/Constants';
+import * as notification from '../../utils/component/notification';
 
 const LOGIN_MUTATION = gql`
     mutation login($user: JSONObject) {
@@ -43,8 +45,12 @@ const Login = (props) => {
         // if (routeHistory.location.state && routeHistory.location.state.from) {
         //   redirectPath = routeHistory.location.state.from.pathname
         // }
-        apolloClient.writeData({ data: { user: result.login } })
+        // apolloClient.writeData({ data: { user: result.login } })
+        setUser(result.login)
         routeHistory.push(redirectPath)
+      }
+      else {
+        notification.showMessage({type: 'error',message: "Failed to login"})
       }
     } 
   });

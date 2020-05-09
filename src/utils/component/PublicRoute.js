@@ -11,7 +11,7 @@ const LOGGEDIN_USER_STATE = gql`
       data {
         _id
         username
-        config_id
+        configId
       } 
     }
   }
@@ -19,13 +19,16 @@ const LOGGEDIN_USER_STATE = gql`
 const PublicRoute = ({ component: Component, restricted, ...rest }) => {
   const defaultRoute = "/";
 
-  const { data: {user: data} } = useQuery(LOGGEDIN_USER_STATE);
-
+  const {data: userResult, error} = useQuery(LOGGEDIN_USER_STATE);
+  let loggedIn = false;
+  if (!error) {
+    loggedIn = !error && userResult && userResult.user && userResult.user.success ? true : false;
+  }
   return (
     // restricted = false meaning public route
     // restricted = true meaning restricted route
     <Route {...rest} render={props => (
-      data && data.success && restricted ?
+      loggedIn && restricted ?
         <Redirect to={defaultRoute} />
         : <Component {...props} />
     )} />

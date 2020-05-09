@@ -1,61 +1,147 @@
 import * as qiniu from 'qiniu-js';
-import haha from 'qiniu/index';
+import ApolloClientAPI from './ApolloClientAPI';
+import gql from 'graphql-tag';
 
-const crypto = require('crypto');
+const QINIU_UPLOAD_TOKEN_STATE = gql`
+  {
+    qiniu @client {
+      success
+      message
+      data
+    }
+  }
+`;
 
-const getUploadToken = (putPolicy, accessKey, secretKey) => {
-  let putPolicyString = JSON.stringify(putPolicy);
-  let encodedPutPolicy = window.btoa(putPolicyString);
+const QINIU_UPLOAD_TOKEN_QUERY = gql`
+  {
+    qiniuToken {
+      success
+      message
+      data
+    }
+  }
+`;
 
-  const hash = crypto.createHmac('sha1', secretKey).update(encodedPutPolicy).digest('hex');
-  let encodedHash = window.btoa(hash);
-  let uploadToken = accessKey + ':' + encodedHash + ':' + encodedPutPolicy;
-  return uploadToken;
-}
-const qiniuAPI = () => {
-  var accessKey = '1onu7yWhC-cnKDKXpXb9qFTYLDXIIBtVGNOY_4i3';
-  var secretKey = '5fx73jAMgIi3CVSryCNL4YxuRxuRne4bHy_vWQHO';
-  const bucket = 'pwg-saas-images';
-  
+const QINIU_BATCH_DELETE_QUERY = gql`
+  mutation qiniuBatchDelete($images: [String!]) {
+    qiniuBatchDelete(images: $images) {
+      success
+      message
+      data
+    }
+  }
+`;
+
+const qiniuAPI = async () => {
+  const apolloClient = ApolloClientAPI();
+  let qiniuToken = await apolloClient.query(QINIU_UPLOAD_TOKEN_QUERY).then(result=>result).catch(err=>{});
+
   return {
-    upload: (file) => {
-      let putPolicy = {
-        scope: bucket,
-        deadline: 1451491200
-      }
-      let uploadToken = getUploadToken(putPolicy, accessKey, secretKey);
-console.log('uploadToken',uploadToken)
-
+    upload: async (file) => {
+      let fileObj = file.originFileObj
       var config = {
-        // useCdnDomain: true,
+        useCdnDomain: true,
         region: qiniu.region.z0
       };
       var putExtra = {
         fname: "",
         params: {},
-        mimeType: ["image/png", "image/jpeg"]
+        mimeType: ["image/png", "image/jpeg", "image/gif"]
       };
-      let key = ''
-      var observable = qiniu.upload(file, key, uploadToken, putExtra, config)
-      var observer = {
-        next(res){
-          console.log('next(res)',res)
-        },
-        error(err){
-          console.log('error(err)',err)
-        }, 
-        complete(res){
-          console.log('complete(res)',res)
+      let key = file.name;
+      return new Promise((resolve, reject) => {
+        console.log('qiniuToken',qiniuToken)
+        if (qiniuToken) {
+          let response = qiniuToken.data.qiniuToken;
+          if (response.success) {
+            let uploadToken = response.data;
+            let observable = qiniu.upload(fileObj, key, uploadToken, putExtra, config)
+
+            observable.subscribe({
+              next(res){
+                console.log('next(res)',res)
+              },
+              error(err){
+                console.log('error(err)',err)
+                reject(err)
+              }, 
+              complete(res){
+                console.log('complete(res)',res)
+                resolve(res)
+              }
+            })
+          }
         }
-      }
-      var subscription = observable.subscribe(observer)
-      // subscription.unsubscribe()
-    },
-    get: () => {
+        else {
+          reject("Error getting token")
+        }
+        // apolloClient.query(QINIU_UPLOAD_TOKEN_STATE).then(result=>{
+        //   console.log('result',result)
+        //   let response = result.data.qiniu;
+        //   if (response.success) {
+        //     let uploadToken = response.data;
+        //     let observable = qiniu.upload(fileObj, key, uploadToken, putExtra, config)
+          
+        //     observable.subscribe({
+        //       next(res){
+        //         //console.log('next(res)',res)
+        //       },
+        //       error(err){
+        //         console.log('error(err)',err)
+        //         reject(err)
+        //       }, 
+        //       complete(res){
+        //         console.log('complete(res)',res)
+        //         resolve(res)
+        //       }
+        //     })
+        //   }
+        // }).catch(err=>{
+        //   console.log('cached qiniu token not found',err)
+          
+        //   apolloClient.query(QINIU_UPLOAD_TOKEN_QUERY).then(result2=>{
+        //     console.log('result2',result2)
+        //     // apolloClient.client.writeQuery({ UPDATE_QINIU_UPLOAD_TOKEN_QUERY, data });
+        //     apolloClient.cache.writeData({data: {qiniu:result2.data.qiniuToken}})
+        //     let response2 = result2.data.qiniuToken;
+        //     if (response2.success) {
+        //       let uploadToken = response2.data;
+        //       let observable = qiniu.upload(fileObj, key, uploadToken, putExtra, config)
   
+        //       observable.subscribe({
+        //         next(res){
+        //           console.log('next(res)',res)
+        //         },
+        //         error(err){
+        //           console.log('error(err)',err)
+        //           reject(err)
+        //         }, 
+        //         complete(res){
+        //           console.log('complete(res)',res)
+        //           resolve(res)
+        //         }
+        //       })
+        //     }
+        //   }).catch(err2=>{
+        //     console.log('err2',err2)
+        //     reject(err2)
+        //   })
+        // })
+
+      })
+
     },
-    remove: () => {
-  
+    batchDelete: async (images) => {
+      return new Promise((resolve, reject) => {
+        apolloClient.mutation(QINIU_BATCH_DELETE_QUERY,{
+          images: images
+        })
+        .then(result=>resolve(result))
+        .catch(err=>{
+          console.log(err);
+          reject(err)
+        });
+      })
     }
   }
 }

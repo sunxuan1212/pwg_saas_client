@@ -10,7 +10,7 @@
 .products-card-item {
   display: flex;
   padding: 1rem;
-  width: 100%;
+  width: 50%;
 }
 
 @media only screen
@@ -18,7 +18,7 @@
   and (max-width: 1024px)
   and (-webkit-min-device-pixel-ratio: 2) {
     .products-card-item {
-      width: 50%;
+      width: 33.33%;
     }
 }
 

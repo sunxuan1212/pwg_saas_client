@@ -2,14 +2,13 @@ import React, {useState} from 'react';
 import Page_01 from './component/Page_01';
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
-import { Button, Modal } from 'antd';
+import { Button, Modal, Empty } from 'antd';
 import {
   PlusOutlined
 } from '@ant-design/icons';
 import ProductForm from './component/ProductForm';
 import ProductCard from './component/ProductCard';
 import Loading from '../../utils/component/Loading';
-
 
 const GET_PRODUCTS_QUERY = gql`
   query products($filter: JSONObject) {
@@ -19,8 +18,10 @@ const GET_PRODUCTS_QUERY = gql`
       updatedAt
       name
       description
+      category
       variants
       published
+      images
     }
   }
 `;
@@ -28,7 +29,6 @@ const GET_PRODUCTS_QUERY = gql`
 const Products = (props) => {
   const [ productFormModal, setProductFormModal ] = useState(false);
   const [ selectedProduct, setSelectedProduct ] = useState(null);
-  const [ modalFooter, setModalFooter ] = useState([]);
 
   const { data, loading, error, refetch } = useQuery(GET_PRODUCTS_QUERY, {
     fetchPolicy: "cache-and-network",
@@ -68,11 +68,6 @@ const Products = (props) => {
     return result;
   }
 
-  let modalProps = {}
-  if (modalFooter) {
-    modalProps['footer'] = modalFooter;
-  }
-
   return (
     <Page_01
       title={"Products"}
@@ -84,32 +79,18 @@ const Products = (props) => {
         {
           loading ? <Loading/> 
           : (error ? "Error" 
-            : (data.products.length > 0 ? getProducts(data) : "No data"))
+            : (data.products.length > 0 ? getProducts(data) : <li style={{width:'100%'}}><Empty/></li> ))
         }
       </ul>
-      <Modal
-        title={selectedProduct ? selectedProduct.name : "New Product"}
-        width={'95%'}
-        visible={productFormModal}
-        onCancel={handleProductFormModalClose}
-        destroyOnClose
-        wrapClassName={'products-modalWrapper'}
-        //bodyStyle={{paddingLeft:'0'}} //for left tab
-        style={{overflow:"hidden"}}
-        //bodyStyle={{paddingTop:'0'}}
-        {...modalProps}
-      >
-        <ProductForm
+      <ProductForm
           // product props
           product={selectedProduct} 
           refetch={refetch}
 
           // modal props
           modalVisible={productFormModal}
-          onCancel={handleProductFormModalClose}
-          setModalFooter={setModalFooter}
+          closeModal={handleProductFormModalClose}
         />
-      </Modal>
     </Page_01>
   )
 }

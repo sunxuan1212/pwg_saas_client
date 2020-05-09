@@ -10,16 +10,13 @@ import gql from "graphql-tag";
 // import './css/base.css';
 import App from './App';
 import {MIDDLETIER_URL} from './utils/Constants';
+import ApolloClientAPI from './utils/ApolloClientAPI';
+
 import * as serviceWorker from './serviceWorker';
 
-const cache = new InMemoryCache({ addTypename: false });
-const client = new ApolloClient({
-    cache,
-    link: new HttpLink({
-        uri: MIDDLETIER_URL,
-        credentials: "include"
-    })
-});
+const theClientAPI = ApolloClientAPI();
+export default theClientAPI;
+const { client, cache, ...restClient } = theClientAPI;
 
 const jsx = (
   <BrowserRouter>
@@ -29,28 +26,68 @@ const jsx = (
   </BrowserRouter>
 );
 
+const GET_LOGGEDIN_USER = gql`
+  query loggedInUser{
+    loggedInUser{
+        success
+        message
+        data
+    }
+  }
+`
+const GET_USERCONFIG = gql`
+  query userConfig($configId: String!) {
+    userConfig(configId: $configId) {
+        success
+        message
+        data
+    }
+  }
+`
 const run = () => {
-  client.query({
-    query: gql`
-      query loggedInUser{
-        loggedInUser{
-            success
-            message
-            data
-        }
-      }
-    `
-  }).then(({data: result})=>{
+  let cacheData = {
+    data: {
+      user: null,
+      config: null
+    }
+  }
+  restClient.query(GET_LOGGEDIN_USER).then(({data: result})=>{
     let userFound = null;
     if (result && result.loggedInUser) {
       userFound = result.loggedInUser;
     }
-    console.log("userFound",userFound)
-    cache.writeData({
+    cacheData = {
       data: {
-        user: userFound
+        user: userFound,
+        config: null
       }
-    });
+    }
+    
+    restClient.query(
+      GET_USERCONFIG,
+      {
+        configId: userFound.data.configId
+      }
+    ).then(({data: result2})=>{
+      if (result2.userConfig.success) {
+        cacheData = {
+          data: {
+            user: userFound,
+            config: result2.userConfig.data
+          }
+        }
+      }
+      cache.writeData(cacheData);
+      ReactDOM.render(jsx,document.getElementById('root'));
+    }).catch(err=>{
+      cache.writeData(cacheData);
+      ReactDOM.render(jsx,document.getElementById('root'));
+      console.log('GET_USERCONFIG error', err)
+    })
+
+  }).catch(err=>{
+    console.log('get logged user error', err)
+    cache.writeData(cacheData)
     ReactDOM.render(jsx,document.getElementById('root'));
   })
 }

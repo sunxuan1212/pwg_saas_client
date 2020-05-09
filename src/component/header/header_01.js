@@ -1,20 +1,17 @@
-import React, { useState } from 'react';
-import { useMutation, useApolloClient } from "@apollo/react-hooks";
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useApolloClient } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import {
   useHistory
 } from "react-router-dom";
 import { NavHashLink as NavLink } from 'react-router-hash-link';
-import { Menu, Divider, Button, Tooltip, Modal } from 'antd';
+import { Menu, Divider, Button, Tooltip } from 'antd';
 import {
-  MenuOutlined,
   ArrowLeftOutlined,
-  LogoutOutlined,
-  ExclamationCircleOutlined
+  LogoutOutlined
 } from '@ant-design/icons';
 import confirmation from '../../utils/component/confirmation';
-
-const { confirm } = Modal;
+import { getConfig } from '../../utils/Constants';
 
 const LOGOUT_MUTATION = gql`
     mutation logout {
@@ -26,9 +23,24 @@ const LOGOUT_MUTATION = gql`
     }
 `;
 
+const LOGGEDIN_USER_STATE = gql`
+  {
+    user @client {
+      success
+      message
+      data {
+        _id
+        username
+        configId
+      } 
+    }
+  }
+`;
+
 const Header_01 = (props) => {
   const apolloClient = useApolloClient();
   let routeHistory = useHistory();
+  const [config , setConfig] = useState(null);
   const [logout] = useMutation(LOGOUT_MUTATION, {
     onCompleted: (result) => {
       if (result && result.logout && result.logout.success) {
@@ -37,11 +49,27 @@ const Header_01 = (props) => {
         // if (routeHistory.location.state && routeHistory.location.state.from) {
         //   redirectPath = routeHistory.location.state.from.pathname
         // }
-        apolloClient.writeData({ data: { user: null } })
+
+        // apolloClient.resetStore()
+        apolloClient.writeData({
+          data: {
+            user: null,
+            config: null
+          }
+        })
         routeHistory.push(redirectPath)
       }
     }
   });
+  // const userResult = useQuery(LOGGEDIN_USER_STATE);
+
+  useEffect(() => {
+    const runAsyncFunc = async () => {
+      setConfig(await getConfig())
+    }
+    runAsyncFunc()
+  }, [])
+
   const [menuCollapsed, setMenuCollapsed] = useState(false);
   const handleMenuOpen = () => {
     setMenuCollapsed(true)
@@ -57,26 +85,26 @@ const Header_01 = (props) => {
   }
 
   const menuItem = [
-    {
-      name: 'Products',
-      icon: null,
-      route: '/products'
-    },
+    // {
+    //   name: 'Products',
+    //   icon: null,
+    //   route: '/products'
+    // },
     {
       name: 'Inventory',
       icon: null,
-      route: '/inventory'
+      route: '/'
     },
     {
       name: 'Orders',
       icon: null,
       route: '/orders'
     },
-    {
-      name: 'Website',
-      icon: null,
-      route: '/website'
-    }
+    // {
+    //   name: 'Configuration',
+    //   icon: null,
+    //   route: '/configuration'
+    // }
   ]
 
   const getMenuItemDisplay = () => {
@@ -127,6 +155,13 @@ const Header_01 = (props) => {
         {getMenuItemDisplay()}
       </div>
       <div className="header_01-footer">
+        {
+          config && !menuCollapsed? (
+            <div className="header_01-item" style={{cursor: 'default'}}>
+              { config.configId }
+            </div>
+          ) : null
+        }
         <div className="header_01-item" onClick={handleLogout}>
           {
             menuCollapsed ?
@@ -137,7 +172,7 @@ const Header_01 = (props) => {
                   />
                 </Tooltip>
               : 
-              <div className="header_01-item"><span>Logout</span></div>
+              <span>Logout</span>
           }
         </div>
       </div>

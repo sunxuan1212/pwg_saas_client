@@ -1,14 +1,12 @@
 import React from 'react';
-import { Tag, Tooltip, Typography } from 'antd';
-import * as Constants from '../../../utils/Constants';
-
-const { Paragraph } = Typography;
+import { Tag, Tooltip } from 'antd';
+import { getConfig } from '../../../utils/Constants';
 
 const ProductCard = (props) => {
   const { product } = props;
 
   const getProductImages = () => {
-    let srcResult = Constants.defaultImage;
+    let srcResult = getConfig().defaultImage;
     if (product.images && product.images.length > 0) {
       
     }
@@ -28,7 +26,7 @@ const ProductCard = (props) => {
             <div className="productCard-title">{product.name}</div>
           </Tooltip>
           {
-            product.published ? <Tag color="green">On</Tag> : <Tag color="red">Off</Tag>
+            product.published ? <Tag color="green">Active</Tag> : <Tag color="red">Inactive</Tag>
           }
         </div>
       </div>

@@ -5,9 +5,11 @@ import { Button, Table, Tag, message } from 'antd';
 import {
   PlusOutlined
 } from '@ant-design/icons';
+import { format } from 'date-fns';
+
 import Page_01 from './component/Page_01';
 import Loading from '../../utils/component/Loading';
-
+import ProductForm from './component/ProductForm';
 
 const GET_PRODUCTS_QUERY = gql`
   query products($filter: JSONObject) {
@@ -17,8 +19,10 @@ const GET_PRODUCTS_QUERY = gql`
       updatedAt
       name
       description
+      category
       variants
       published
+      images
     }
   }
 `;
@@ -58,14 +62,36 @@ const UPDATE_INVENTORY_PUBLISH = gql`
   }
 `;
 
+const getAllProductCategory = (products) => {
+  let result = [];
+  products.map((aProduct)=>{
+    if (aProduct.category && aProduct.category.length > 0) {
+      aProduct.category.map((aCategory)=>{
+        let foundPushedItem = result.find((anItem)=>anItem._id == aCategory._id);
+        if (!foundPushedItem) {
+          result.push(aCategory);
+        }
+      })
+    }
+  });
+  return result;
+}
+
 const Inventory = (props) => {
+  const [ productFormModal, setProductFormModal ] = useState(false);
+  const [ selectedProduct, setSelectedProduct ] = useState(null);
+
   const [ selectedItems, setSelectedItems ] = useState([]);
   const [ displaySelectionPanel, setDisplaySelectionPanel ] = useState(false);
 
   const { data: productsData, loading, error, refetch: refetchProducts } = useQuery(GET_PRODUCTS_QUERY, {
     fetchPolicy: "cache-and-network",
     variables: {
-
+      // filter: {
+      //   sorter: {
+      //     createdAt: 1
+      //   }
+      // }
     },
     onError: (error) => {
       console.log("products error", error)
@@ -109,19 +135,49 @@ const Inventory = (props) => {
     }
   },[selectedItems.length])
 
+
+  const handleProductFormModalOpen = () => {
+    setProductFormModal(true);
+  }
+  const handleProductFormModalClose = () => {
+    setProductFormModal(false);
+  }
+
+  const handleOnClickProduct = (product) => {
+    handleProductFormModalOpen();
+    setSelectedProduct(product)
+  }
+
+  const refetchData = () => {
+    refetchProducts();
+    refetchInventory();
+  }
+
+
   let columns = [
     {
       title: 'No.',
       dataIndex: 'index',
+      width: 75,
       render: (text, record, index) => {
         return index + 1 + '.';
+      }
+    },
+    {
+      title: "Created At",
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+      render: (text, record) => {
+        let dateTime = format(new Date(text), "MM/dd/yyyy hh:mm:ss aa")
+        return dateTime;
       }
     },
     {
       title: 'Name',
       dataIndex: 'name',
       render: (text, record) => {
-        let result = record.name;
+        let result = record.name ? (<Button type="link" onClick={()=>{handleOnClickProduct(record)}}>{record.name}</Button>) : null;
         if (!result) {
           let newName = "";
           if (record.variants) {
@@ -131,6 +187,9 @@ const Inventory = (props) => {
               newName += `${record.variants[aKey]} ${index == variantKeys.length - 1 ? "" : "/ "}`
             })
           }
+          else {
+            newName = "-";
+          }
           result = newName;
         }
         return result;
@@ -139,9 +198,6 @@ const Inventory = (props) => {
     {
       title: 'Price',
       dataIndex: 'price',
-      sorter: (a, b) => {
-        return a.price > b.price
-      },
       render: (text, record) => {
         let result = record.price;
         if (!result) {
@@ -179,7 +235,7 @@ const Inventory = (props) => {
       dataIndex: 'published',
       render: (text, record) => {
         return (
-          record.published ? <Tag color="green">On</Tag> : <Tag color="red">Off</Tag>
+          record.published ? <Tag color="green">Active</Tag> : <Tag color="red">Inactive</Tag>
         )
       } 
     }
@@ -277,19 +333,32 @@ const Inventory = (props) => {
   return (
     <Page_01
       title={"Inventory"}
-      //extra={[
-      //  <Button key="create" type="primary" icon={<PlusOutlined />} />
-      //]}
+      extra={[
+        <Button key="create" type="primary" icon={<PlusOutlined />} onClick={()=>{handleOnClickProduct(null)}} />
+      ]}
     >
       <Table 
         columns={columns} 
         rowSelection={rowSelection} 
         dataSource={getTableData()} 
         pagination={false}
+        scroll={{x: columns.length * 150}}
+        size={'small'}
       />
       <div className={`inventory-selectionPanel ${displaySelectionPanel ? 'open' : 'close'}`}>
         {selectionPanel()}
       </div>
+
+      <ProductForm
+        // product props
+        product={selectedProduct} 
+        categories={productsData && productsData.products ? getAllProductCategory(productsData.products) : []}
+        refetch={refetchData}
+
+        // modal props
+        modalVisible={productFormModal}
+        closeModal={handleProductFormModalClose}
+      />
     </Page_01>
   )
 }

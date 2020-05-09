@@ -21,11 +21,10 @@ import PrivateRoute from './utils/component/PrivateRoute';
 import PublicRoute from './utils/component/PublicRoute';
 import PageNotFound from './utils/component/PageNotFound';
 
+
 let Component_Layout = Component['Layout_01'];
 let Component_Header = Component['Header_01'];
 // let Component_Footer = Component['Header_01'];
-
-let objects = require("./database/config/objects.json");
 
 const GET_USER_STATE = gql`
   {
@@ -35,48 +34,50 @@ const GET_USER_STATE = gql`
       data {
         _id
         username
-        config_id
+        configId
       } 
     }
   }
 `;
 
+// const GET_CONFIG_STATE = gql`
+//   {
+//     config @client {
+//       success
+//       message
+//       data {
+//         _id
+//         username
+//         configId
+//       } 
+//     }
+//   }
+// `;
+
 const App = (props) => {
-  const { data: { user: loggedUser} } = useQuery(GET_USER_STATE);
+  const getUserResult = useQuery(GET_USER_STATE);
+  console.log('getUserResult',getUserResult)
+  const loggedIn = getUserResult && getUserResult.data && getUserResult.data.user && getUserResult.data.user.success ? true : false;
 
-  const getObjects = () => {
-    let result = [];
-    let objectKeys = Object.keys(objects.objects);
-    objectKeys.map((aKey, index) => {
-      result.push(
-        <div key={index}>
-          {aKey}<br />
-          {JSON.stringify(objects.objects[aKey])}
-        </div>
-      )
-    })
-    return result;
-  }
-
-  const Haha = () => {
+  const Main = () => {
     return (
       <div>
-        mainnnnnn
-        </div>
+        Main
+      </div>
     )
   }
 
   return (
     <Component_Layout
-      header={loggedUser && loggedUser.success ? (<Component_Header />) : null}
-      footer={loggedUser && loggedUser.success ? "2020" : null}
+      header={loggedIn ? (<Component_Header />) : null}
+      footer={loggedIn ? "2020" : null}
     >
       <Switch>
-        <PrivateRoute exact path={'/'} component={Haha}/>
-        <PrivateRoute exact path={'/products'} component={Products}/>
-        <PrivateRoute exact path={'/inventory'} component={Inventory}/>
+        {/* <PrivateRoute exact path={'/products'} component={Products}/> */}
+        <PrivateRoute exact path={'/'} component={Inventory}/>
+        <PrivateRoute exact path={'/main'} component={Main}/>
         <PrivateRoute exact path={'/orders'} component={Orders}/>
-        <PrivateRoute exact path={'/website'} component={Haha}/>
+        <PrivateRoute exact path={'/configuration'} component={Main}/>
         <PublicRoute restricted={true} exact path={'/login'} component={Login} />
         <Route component={PageNotFound} />
       </Switch>

@@ -19,3 +19,12 @@
   text-overflow: ellipsis;
   word-break: keep-all;
 }
+
+
+.productForm-upload .ant-upload-list-picture-card .ant-upload-list-item{
+
+}
+
+.productForm-upload-fav-icon {
+  color: white;
+}

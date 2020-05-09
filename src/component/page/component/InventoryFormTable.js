@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
-import { Table, Input, Button, Popconfirm, Form, Tag, InputNumber, Modal, Tooltip, Switch } from 'antd';
-import { CloseOutlined, DeleteOutlined, PlusOutlined, EditOutlined, CheckOutlined } from '@ant-design/icons';
+import { Table, Input, Button, Popconfirm, Form, InputNumber, Modal, Tooltip, Switch } from 'antd';
+import { DeleteOutlined, PlusOutlined, EditOutlined, CheckOutlined } from '@ant-design/icons';
 import update from 'immutability-helper';
 
 const { Search } = Input;
@@ -181,7 +181,7 @@ const InventoryFormTable = (props) => {
         render: (text, record) => {
           return (
               <div style={{width: '100%', textAlign: 'center', cursor: 'pointer'}}>
-                <Switch checkedChildren="On" unCheckedChildren="Off" checked={record.published} onChange={(checked, e)=>{handleUpdatePublished(record, checked, e)}} />
+                <Switch checkedChildren="Active" unCheckedChildren="Inactive" checked={record.published} onChange={(checked, e)=>{handleUpdatePublished(record, checked, e)}} />
               </div>
           )
           // return (
@@ -190,28 +190,64 @@ const InventoryFormTable = (props) => {
         } 
       },
       {
-        title: (
-          <Tooltip title="New Variant">
-            <Button
-              onClick={()=>{setNewColModal(true)}}
-              block
-              type='link'
-              icon={(<PlusOutlined/>)}
-              disabled={variantColKeys.length < maxVariants ? false : true}
-            />
-          </Tooltip>
-        ),
+        title: "Add Variant",
         dataIndex: 'operation',
         width: 50,
         align: 'center',
         fixed: 'right',
+        filterIcon: (<PlusOutlined />),
+        filterDropdown: (props) => {
+          const editVariant = (value) => {
+            props.confirm();
+            if (value) {
+              let newVariantId = 'v' + new Date().getTime();
+              setProductVariants({...productVariants, [newVariantId]: value});
+            }
+          }
+          return (
+            <div style={{padding: '10px', display: 'flex'}}>
+              {
+                props.visible ? 
+                  <Search
+                    enterButton={(<CheckOutlined />)}
+                    onSearch={editVariant}
+                    //size="small"
+                  />
+                : null
+              }
+            </div>
+          )
+        }, 
         render: (text, record) =>
           inventoryData.length >= 1 ? (
             <Popconfirm title="Sure to delete?" onConfirm={() => handleDeleteRow(record.key)}>
               <div style={{width: '100%', textAlign: 'center', cursor: 'pointer'}}><DeleteOutlined /></div>
             </Popconfirm>
           ) : null,
-      }
+      },
+      // {
+      //   title: (
+      //     <Tooltip title="New Variant">
+      //       <Button
+      //         onClick={()=>{setNewColModal(true)}}
+      //         block
+      //         type='link'
+      //         icon={(<PlusOutlined/>)}
+      //         disabled={variantColKeys.length < maxVariants ? false : true}
+      //       />
+      //     </Tooltip>
+      //   ),
+      //   dataIndex: 'operation',
+      //   width: 50,
+      //   align: 'center',
+      //   fixed: 'right',
+      //   render: (text, record) =>
+      //     inventoryData.length >= 1 ? (
+      //       <Popconfirm title="Sure to delete?" onConfirm={() => handleDeleteRow(record.key)}>
+      //         <div style={{width: '100%', textAlign: 'center', cursor: 'pointer'}}><DeleteOutlined /></div>
+      //       </Popconfirm>
+      //     ) : null,
+      // }
     ];
 
     // result.push(
@@ -387,8 +423,9 @@ const InventoryFormTable = (props) => {
           marginBottom: 16,
         }}
         disabled={inventoryData.length < maxInventory ? false : true}
+        icon={<PlusOutlined/>}
       >
-        Add a row
+        Item
       </Button>
       
       <Table
