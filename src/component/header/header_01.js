@@ -81,11 +81,11 @@ const Header_01 = (props) => {
   }
 
   const menuItem = [
-    // {
-    //   name: 'Products',
-    //   icon: null,
-    //   route: '/products'
-    // },
+    {
+      name: 'Products',
+      icon: null,
+      route: '/products'
+    },
     {
       name: 'Inventory',
       icon: null,

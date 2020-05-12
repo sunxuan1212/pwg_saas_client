@@ -7,9 +7,12 @@ const ProductCard = (props) => {
   const config = useConfigCache();
 
   const getProductImages = () => {
-    let srcResult = config.defaultImage;
+    let srcResult = config.defaultImage_system;
     if (product.images && product.images.length > 0) {
-      
+      let foundFavImage = product.images.find((anImage)=>anImage.fav);
+      if (foundFavImage) {
+        srcResult = config.imageSrc + foundFavImage.name;
+      }
     }
     return {
       backgroundImage: `url(${srcResult})`

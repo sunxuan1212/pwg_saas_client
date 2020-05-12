@@ -304,9 +304,9 @@ const ProductInfoForm = (props) => {
     }
 
     let imagesToBeModified = getImageFilesToModify(product && product.images ? product.images : [], fileList);
-    if (imagesToBeModified.upload.length > 0 || imagesToBeModified.delete.length > 0) {
+    // if (imagesToBeModified.upload.length > 0 || imagesToBeModified.delete.length > 0) {
       finalProductValue['images'] = imagesToBeModified.allImages;
-    }
+    // }
 
     const QiniuAPI = await qiniuAPI();
 
@@ -571,29 +571,29 @@ const ProductForm = (props) => {
 
   return (
     <Modal
-        title={product ? product.name : "New Product"}
-        width={'95%'}
-        visible={modalVisible}
-        onCancel={closeModal}
-        destroyOnClose
-        wrapClassName={'products-modalWrapper'}
-        //bodyStyle={{paddingLeft:'0'}} //for left tab
-        style={{overflow:"hidden"}}
-        //bodyStyle={{paddingTop:'0'}}
-        {...modalProps}
-      >
-        <ProductInfoForm
-          // product props
-          product={product} 
-          categories={categories}
-          refetch={refetch}
+      title={product ? product.name : "New Product"}
+      width={'95%'}
+      visible={modalVisible}
+      onCancel={closeModal}
+      destroyOnClose
+      wrapClassName={'products-modalWrapper'}
+      //bodyStyle={{paddingLeft:'0'}} //for left tab
+      style={{overflow:"hidden"}}
+      //bodyStyle={{paddingTop:'0'}}
+      {...modalProps}
+    >
+      <ProductInfoForm
+        // product props
+        product={product} 
+        categories={categories}
+        refetch={refetch}
 
-          // modal props
-          modalVisible={modalVisible}
-          onCancel={closeModal}
-          setModalFooter={setModalFooter}
-        />
-      </Modal>
+        // modal props
+        modalVisible={modalVisible}
+        onCancel={closeModal}
+        setModalFooter={setModalFooter}
+      />
+    </Modal>
   )
 }
 export default ProductForm;
