@@ -7,7 +7,6 @@ import { CheckOutlined } from '@ant-design/icons';
 
 import Page_01 from './component/Page_01';
 import OrderInfo from './component/OrderInfo';
-import { getConfig } from '../../utils/Constants';
 
 const { TabPane } = Tabs;
 const { Search } = Input;
@@ -82,28 +81,24 @@ const Orders = (props) => {
 
   const [ updateOrderPayment , updateOrderPaymentResult ] = useMutation(UPDATE_ORDER_PAYMENT_QUERY,{
     onCompleted: (result) => {
-      console.log('updateOrderPayment result', result)
       refetchOrders()
     }
   })
 
   const [ updateOrderDelivery , updateOrderDeliveryResult ] = useMutation(UPDATE_ORDER_DELIVERY_QUERY,{
     onCompleted: (result) => {
-      console.log('updateOrderDelivery result', result)
       refetchOrders()
     }
   })
 
   const [ cancelOrder , cancelOrderResult ] = useMutation(CANCEL_ORDER_QUERY,{
     onCompleted: (result) => {
-      console.log('updateOrderDelivery result', result)
       refetchOrders()
     }
   })
 
   const handleOrderModalDisplayOpen = (selectedOrder) => {
     setOrderModalDisplay(true);
-    console.log('selectedOrder',selectedOrder)
     setSelectedOrder(selectedOrder)
   }
   const handleOrderModalDisplayClose = () => {
@@ -180,7 +175,6 @@ const Orders = (props) => {
         key: 'paid',
         render: (text, record) => {
           const handleUpdatePayment = () => {
-            console.log('handleUpdatePayment',record)
             updateOrderPayment({
               variables: {
                 _id: record._id,
@@ -205,7 +199,9 @@ const Orders = (props) => {
           }
           return (
             <Popconfirm title="Sure to delete?" onConfirm={handleCancelOrder}>
-              <div style={{width: '100%', textAlign: 'center', cursor: 'pointer'}}>取消</div>
+              {/* <div style={{width: '100%', textAlign: 'center', cursor: 'pointer'}}>取消</div> */}
+          <Button type="danger" size="small">取消</Button>
+
           {/* <Button type="danger" size="small" onClick={handleCancelOrder}>取消</Button> */}
             </Popconfirm>
           )
@@ -220,7 +216,6 @@ const Orders = (props) => {
         key: 'paid',
         render: (text, record) => {
           const handleUpdatePayment = () => {
-            console.log('handleUpdatePayment',record)
             updateOrderPayment({
               variables: {
                 _id: record._id,

@@ -1,22 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Modal, Divider, Descriptions, List, Avatar } from 'antd';
 import { format } from 'date-fns';
 
-import { getConfig } from '../../../utils/Constants';
+import { useConfigCache } from '../../../utils/Constants';
 
 
 const OrderInfo = (props) => {
   const { order, closeModal, visible, ... restProps } = props;
-  const [ config, setConfig ] = useState(null);
-  useEffect(()=>{
-    const runAsyncFunc = async () => {
-      setConfig(await getConfig())
-    }
-    runAsyncFunc()
-  },[])
+  const config = useConfigCache();
 
   const orderItems = (item) => {
-    console.log('config',config)
     let title = item.product.name;
     let variant = "";
     let variantKeys = Object.keys(item.variant);

@@ -1,12 +1,13 @@
 import React from 'react';
 import { Tag, Tooltip } from 'antd';
-import { getConfig } from '../../../utils/Constants';
+import { useConfigCache } from '../../../utils/Constants';
 
 const ProductCard = (props) => {
   const { product } = props;
+  const config = useConfigCache();
 
   const getProductImages = () => {
-    let srcResult = getConfig().defaultImage;
+    let srcResult = config.defaultImage;
     if (product.images && product.images.length > 0) {
       
     }

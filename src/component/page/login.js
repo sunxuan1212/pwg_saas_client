@@ -1,11 +1,11 @@
 import React from 'react';
-import { useMutation, useApolloClient } from "@apollo/react-hooks";
+import { useLazyQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import { Form, Input, Button, Checkbox } from 'antd';
 import { useHistory } from "react-router-dom";
 
 import Loading from '../../utils/component/Loading';
-import { setUser } from '../../utils/Constants';
+import { setUserCache, setConfigCache } from '../../utils/Constants';
 import * as notification from '../../utils/component/notification';
 
 const LOGIN_MUTATION = gql`
@@ -17,6 +17,17 @@ const LOGIN_MUTATION = gql`
       }
     }
 `;
+
+const GET_USER_CONFIG_QUERY = gql`
+  query userConfig($configId: String!) {
+    userConfig(configId: $configId) {
+        success
+        message
+        data
+    }
+  }
+`
+
 
 const layout = {
   labelCol: {
@@ -34,20 +45,21 @@ const tailLayout = {
 };
 
 const Login = (props) => {
-  const apolloClient = useApolloClient();
   let routeHistory = useHistory();
-  const [login, {loading}] = useMutation(LOGIN_MUTATION,{
+  const [login, { data, loading}] = useMutation(LOGIN_MUTATION,{
     onCompleted: (result)=>{
-      console.log("logged in",result);
       if (result && result.login && result.login.success) {
-        console.log("logged in",result.login);
         let redirectPath = '/';
         // if (routeHistory.location.state && routeHistory.location.state.from) {
         //   redirectPath = routeHistory.location.state.from.pathname
         // }
-        // apolloClient.writeData({ data: { user: result.login } })
-        setUser(result.login)
-        routeHistory.push(redirectPath)
+        fetchConfig({
+          variables: {
+            configId: result.login.data.configId
+          }
+        })
+        // setUserCache(result.login)
+        // routeHistory.push(redirectPath)
       }
       else {
         notification.showMessage({type: 'error',message: "Failed to login"})
@@ -55,8 +67,17 @@ const Login = (props) => {
     } 
   });
 
+  const [ fetchConfig ] = useLazyQuery(GET_USER_CONFIG_QUERY,{
+      fetchPolicy: 'cache-and-network',
+      onCompleted: (result2) => {
+        if (result2 && result2.userConfig && result2.userConfig.success) {
+          setConfigCache(result2.userConfig.data)
+          setUserCache(data.login)
+        }
+      }
+    });
+
   const onFinish = values => {
-    console.log("on submit login")
     login({
       variables: { user: values }
     });

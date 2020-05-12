@@ -114,13 +114,11 @@ const Inventory = (props) => {
 
   const [updateProductPublish] = useMutation(UPDATE_PRODUCT_PUBLISH,{
     onCompleted: (result) => {
-      console.log("updateInventoryPublish result",result)
       refetchProducts();
     }
   });
   const [updateInventoryPublish] = useMutation(UPDATE_INVENTORY_PUBLISH,{
     onCompleted: (result) => {
-      console.log("updateInventoryPublish result",result)
       refetchInventory();
     }
   });

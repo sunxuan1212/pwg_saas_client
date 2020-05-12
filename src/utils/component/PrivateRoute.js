@@ -1,33 +1,15 @@
 import React from 'react';
-import { useQuery, useLazyQuery } from "@apollo/react-hooks";
-import gql from "graphql-tag";
 import { Route, Redirect, useLocation } from 'react-router-dom';
-
-const LOGGEDIN_USER_STATE = gql`
-  {
-    user @client {
-      success
-      message
-      data {
-        _id
-        username
-        configId
-      } 
-    }
-  }
-`;
+import { useUserCache } from '../Constants';
 
 const PrivateRoute = ({ component: Component, ...rest }) => {
   let routeLocation = useLocation();
   const defaultRoute = "/login";
 
-  const userResult = useQuery(LOGGEDIN_USER_STATE);
+  const userResult = useUserCache();
   let loggedIn = false;
-  if (userResult) {
-    const {error, loading, ...getUserResult} = userResult;
-    if (!loading && !error) {
-      loggedIn = !error && !loading && getUserResult.data && getUserResult.data.user && getUserResult.data.user.success ? true : false;
-    }
+  if (userResult && userResult.success) {
+    loggedIn = true;
   }
   return (
     // Show the component only when the user is logged in

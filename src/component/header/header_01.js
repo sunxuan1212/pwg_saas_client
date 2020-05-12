@@ -11,7 +11,7 @@ import {
   LogoutOutlined
 } from '@ant-design/icons';
 import confirmation from '../../utils/component/confirmation';
-import { getConfig } from '../../utils/Constants';
+import { useConfigCache } from '../../utils/Constants';
 
 const LOGOUT_MUTATION = gql`
     mutation logout {
@@ -40,35 +40,31 @@ const LOGGEDIN_USER_STATE = gql`
 const Header_01 = (props) => {
   const apolloClient = useApolloClient();
   let routeHistory = useHistory();
-  const [config , setConfig] = useState(null);
+  // const [config , setConfig] = useState(null);
+  const config = useConfigCache();
   const [logout] = useMutation(LOGOUT_MUTATION, {
     onCompleted: (result) => {
       if (result && result.logout && result.logout.success) {
-        console.log("logged out")
         let redirectPath = '/login';
         // if (routeHistory.location.state && routeHistory.location.state.from) {
         //   redirectPath = routeHistory.location.state.from.pathname
         // }
+        
+        apolloClient.resetStore().then(()=>{
+          props.setLoggedIn(false);
+          routeHistory.push(redirectPath)
 
-        // apolloClient.resetStore()
-        apolloClient.writeData({
-          data: {
-            user: null,
-            config: null
-          }
         })
-        routeHistory.push(redirectPath)
+        // apolloClient.clearStore()
+        // apolloClient.writeData({
+        //   data: {
+        //     user: null,
+        //     config: null
+        //   }
+        // })
       }
     }
   });
-  // const userResult = useQuery(LOGGEDIN_USER_STATE);
-
-  useEffect(() => {
-    const runAsyncFunc = async () => {
-      setConfig(await getConfig())
-    }
-    runAsyncFunc()
-  }, [])
 
   const [menuCollapsed, setMenuCollapsed] = useState(false);
   const handleMenuOpen = () => {
@@ -156,9 +152,9 @@ const Header_01 = (props) => {
       </div>
       <div className="header_01-footer">
         {
-          config && !menuCollapsed? (
+          config && !menuCollapsed ? (
             <div className="header_01-item" style={{cursor: 'default'}}>
-              { config.configId }
+              { config.profile.name }
             </div>
           ) : null
         }

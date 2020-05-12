@@ -31,8 +31,6 @@ const ImageHook = (props) => {
             window.removeEventListener('resize', debouncedHandleResize)
         }
     });
-
-    console.log(dimensions)
     return null;
 }
 

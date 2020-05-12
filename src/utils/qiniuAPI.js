@@ -32,10 +32,12 @@ const QINIU_BATCH_DELETE_QUERY = gql`
   }
 `;
 
-const qiniuAPI = async () => {
+const qiniuAPI = async (loadToken = true) => {
   const apolloClient = ApolloClientAPI();
-  let qiniuToken = await apolloClient.query(QINIU_UPLOAD_TOKEN_QUERY).then(result=>result).catch(err=>{});
-
+  let qiniuToken = "";
+  if (loadToken) {
+    qiniuToken = await apolloClient.query(QINIU_UPLOAD_TOKEN_QUERY).then(result=>result).catch(err=>{});
+  }
   return {
     upload: async (file) => {
       let fileObj = file.originFileObj
@@ -50,7 +52,6 @@ const qiniuAPI = async () => {
       };
       let key = file.name;
       return new Promise((resolve, reject) => {
-        console.log('qiniuToken',qiniuToken)
         if (qiniuToken) {
           let response = qiniuToken.data.qiniuToken;
           if (response.success) {
@@ -142,6 +143,10 @@ const qiniuAPI = async () => {
           reject(err)
         });
       })
+    },
+
+    imageMogr2: (options, key, domain) => {
+      return qiniu.imageMogr2(options, key, domain);
     }
   }
 }

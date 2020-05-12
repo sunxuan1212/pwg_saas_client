@@ -8,7 +8,7 @@ import confirmation from '../../../utils/component/confirmation';
 import InventoryFormTable from './InventoryFormTable';
 
 import qiniuAPI from '../../../utils/qiniuAPI';
-import { getConfig } from '../../../utils/Constants';
+import { useConfigCache } from '../../../utils/Constants';
 // import ApolloClientAPI from '../../../utils/ApolloClientAPI';
 
 const { Panel } = Collapse;
@@ -70,8 +70,7 @@ const UPDATE_PRODUCT_QUERY = gql`
 `;
 
 // convert db image obj to match Upload Component format
-const getDefaultImageArray = async (array) => {
-  let config = await getConfig()
+const getDefaultImageArray = (array, config) => {
   let imageSrc = config.imageSrc;
   return array.map((anImage)=>{
     anImage['uid'] = anImage.name;
@@ -137,6 +136,7 @@ function getBase64(file) {
 
 const ProductInfoForm = (props) => {
   const {product = null, categories, refetch, ...modalProps} = props;
+  const config = useConfigCache();
   const fileLimit = 4;
 
   const [ form ] = Form.useForm();
@@ -174,12 +174,8 @@ const ProductInfoForm = (props) => {
           }
         }
       });
-
       if (product.images && product.images.length > 0) {
-        const runAsyncFunc = async () => {
-          setFileList(await getDefaultImageArray(product.images))
-        }
-        runAsyncFunc()
+        setFileList(getDefaultImageArray(product.images, config));
       }
     }
     else {
@@ -197,7 +193,6 @@ const ProductInfoForm = (props) => {
   );
 
   const handleFileListChange = ({ fileList, ...rest }) => {
-    console.log("handleFileListChange,fileList",fileList)
     let result = fileList.map((aFile)=>{
       if (aFile.fav) {
         //aFile['status'] = 'done';
@@ -245,7 +240,6 @@ const ProductInfoForm = (props) => {
   const [readInventory, readInventoryResult ] = useLazyQuery(READ_PRODUCT_INVENTORY_QUERY,{
     fetchPolicy: "cache-and-network",
     onCompleted: (result) => {
-      console.log("readInventory result",result)
       if (result && result.inventory) {
         let flattenedInventory = [];
         result.inventory.map((anInventory,index)=>{
@@ -253,7 +247,6 @@ const ProductInfoForm = (props) => {
           let newInventory = {...restInventory, ...variants, key: restInventory._id};
           flattenedInventory.push(newInventory);
         })
-        console.log('flattenedInventory',flattenedInventory)
         setInventoryData(flattenedInventory);
       }
 
@@ -262,34 +255,33 @@ const ProductInfoForm = (props) => {
 
   const [bulkUpdateInventory] = useMutation(BULK_UPDATE_INVENTORY_QUERY,{
     onCompleted: (result) => {
-      console.log("bulkUpdateInventory result",result)
+      // console.log("bulkUpdateInventory result",result)
     }
   })
 
   const [createProduct, createProductResult ] = useMutation(CREATE_NEW_PRODUCT_QUERY,{
     onCompleted: (result) => {
-      console.log("createProduct result",result)
+      // console.log("createProduct result",result)
       modalProps.onCancel();
       refetch();
     }
   })
   const [deleteProduct] = useMutation(DELETE_PRODUCT_QUERY,{
     onCompleted: (result) => {
-      console.log("deleteProduct result",result)
+      // console.log("deleteProduct result",result)
       modalProps.onCancel();
       refetch();
     }
   })
   const [updateProduct, updateProductResult ] = useMutation(UPDATE_PRODUCT_QUERY,{
     onCompleted: (result) => {
-      console.log("updateProduct result",result)
+      // console.log("updateProduct result",result)
       modalProps.onCancel();
       refetch();
     }
   })
 
   const onFinish = async (values) => {
-    console.log("onFinish", values)
     
     let finalProductValue = {
       ...values,
@@ -357,7 +349,6 @@ const ProductInfoForm = (props) => {
         restInventory['variants'] = variantObj;
         return restInventory;
       });
-      console.log("newInventory",newInventory)
       let deletedInventory = []
       if (readInventoryResult.data && readInventoryResult.data.inventory) {
         readInventoryResult.data.inventory.map((anInventory)=>{
@@ -437,6 +428,22 @@ const ProductInfoForm = (props) => {
       </Button>
     )
   } 
+
+  // const editImageOutput = (image) => {
+  //   if (image) {
+  //     const QiniuAPI = qiniuAPI();
+  //     let imageSrc = config.imageSrc;
+  //     var imgLink = QiniuAPI.imageMogr2({
+  //       "auto-orient": true,      // 布尔值，是否根据原图EXIF信息自动旋正，便于后续处理，建议放在首位。
+  //       strip: true,              // 布尔值，是否去除图片中的元信息
+  //       thumbnail: '1000x1000',    // 缩放操作参数
+  //       crop: '!300x400a10a10',    // 裁剪锚点参数
+  //       quality: 40,              // 图片质量，取值范围1-100
+  //       rotate: 20,               // 旋转角度，取值范围1-360，缺省为不旋转。
+  //       blur: '3x5'               // 高斯模糊参数
+  //     }, image.name, domain)
+  //   }
+  // }
   return (
     <div id="productForm">
       <Collapse 
@@ -452,9 +459,13 @@ const ProductInfoForm = (props) => {
             labelCol={{ span: 5 }} 
             wrapperCol={{ span: 16 }} 
           >
-            <Form.Item name={'_id'} label="ID">
-              <Input />
-            </Form.Item>
+            {
+              !product ? (
+                <Form.Item name={'_id'} label="ID">
+                  <Input />
+                </Form.Item> 
+              ) : null
+            }
             <Form.Item name={'name'} label="Name" rules={[{ required: true }]}>
               <Input />
             </Form.Item>
@@ -484,7 +495,7 @@ const ProductInfoForm = (props) => {
                 )}
               >
                 {productCategory.map((item, index) => (
-                  <Option key={item._id} value={item._id}>{item.name}</Option>
+                  <Option key={index} value={item._id}>{item.name}</Option>
                 ))}
               </Select>
             </Form.Item>
@@ -497,7 +508,6 @@ const ProductInfoForm = (props) => {
                 <Upload
                   accept="image/*"
                   beforeUpload={ (file) => {
-                    console.log("beforeUpload", file)
                     return false;
                   }}
                   listType="picture-card"
@@ -517,7 +527,8 @@ const ProductInfoForm = (props) => {
                   footer={getPreviewModalFooter()} 
                   onCancel={handlePreviewClose}>
                 {/* <Modal visible={previewVisible} footer={null} onCancel={handlePreviewClose}> */}
-                  <img alt="example" style={{ width: '100%' }} src={previewImage ? previewImage.url || previewImage.thumbUrl : ''} />
+                  <img alt={`preview: ${previewImage ? previewImage.name : ""}`} style={{ width: '100%' }} src={previewImage ? previewImage.url || previewImage.thumbUrl : ''} />
+                  {/* <img alt="example" style={{ width: '100%' }} src={()=>{editImageOutput(previewImage)}} /> */}
                 </Modal>
               </React.Fragment>
             </Form.Item>

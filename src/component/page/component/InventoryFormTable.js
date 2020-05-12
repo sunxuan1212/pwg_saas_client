@@ -189,65 +189,65 @@ const InventoryFormTable = (props) => {
           // )
         } 
       },
-      {
-        title: "Add Variant",
-        dataIndex: 'operation',
-        width: 50,
-        align: 'center',
-        fixed: 'right',
-        filterIcon: (<PlusOutlined />),
-        filterDropdown: (props) => {
-          const editVariant = (value) => {
-            props.confirm();
-            if (value) {
-              let newVariantId = 'v' + new Date().getTime();
-              setProductVariants({...productVariants, [newVariantId]: value});
-            }
-          }
-          return (
-            <div style={{padding: '10px', display: 'flex'}}>
-              {
-                props.visible ? 
-                  <Search
-                    enterButton={(<CheckOutlined />)}
-                    onSearch={editVariant}
-                    //size="small"
-                  />
-                : null
-              }
-            </div>
-          )
-        }, 
-        render: (text, record) =>
-          inventoryData.length >= 1 ? (
-            <Popconfirm title="Sure to delete?" onConfirm={() => handleDeleteRow(record.key)}>
-              <div style={{width: '100%', textAlign: 'center', cursor: 'pointer'}}><DeleteOutlined /></div>
-            </Popconfirm>
-          ) : null,
-      },
       // {
-      //   title: (
-      //     <Tooltip title="New Variant">
-      //       <Button
-      //         onClick={()=>{setNewColModal(true)}}
-      //         block
-      //         type='link'
-      //         icon={(<PlusOutlined/>)}
-      //         disabled={variantColKeys.length < maxVariants ? false : true}
-      //       />
-      //     </Tooltip>
-      //   ),
+      //   title: "Add Variant",
       //   dataIndex: 'operation',
       //   width: 50,
       //   align: 'center',
       //   fixed: 'right',
+      //   filterIcon: (<PlusOutlined />),
+      //   filterDropdown: (props) => {
+      //     const editVariant = (value) => {
+      //       props.confirm();
+      //       if (value) {
+      //         let newVariantId = 'v' + new Date().getTime();
+      //         setProductVariants({...productVariants, [newVariantId]: value});
+      //       }
+      //     }
+      //     return (
+      //       <div style={{padding: '10px', display: 'flex'}}>
+      //         {
+      //           props.visible ? 
+      //             <Search
+      //               enterButton={(<CheckOutlined />)}
+      //               onSearch={editVariant}
+      //               //size="small"
+      //             />
+      //           : null
+      //         }
+      //       </div>
+      //     )
+      //   }, 
       //   render: (text, record) =>
       //     inventoryData.length >= 1 ? (
       //       <Popconfirm title="Sure to delete?" onConfirm={() => handleDeleteRow(record.key)}>
       //         <div style={{width: '100%', textAlign: 'center', cursor: 'pointer'}}><DeleteOutlined /></div>
       //       </Popconfirm>
       //     ) : null,
-      // }
+      // },
+      {
+        title: (
+          <Tooltip title="New Variant">
+            <Button
+              onClick={()=>{setNewColModal(true)}}
+              block
+              type='link'
+              icon={(<PlusOutlined/>)}
+              disabled={variantColKeys.length < maxVariants ? false : true}
+            />
+          </Tooltip>
+        ),
+        dataIndex: 'operation',
+        width: 50,
+        align: 'center',
+        fixed: 'right',
+        render: (text, record) =>
+          inventoryData.length >= 1 ? (
+            <Popconfirm title="Sure to delete?" onConfirm={() => handleDeleteRow(record.key)}>
+              <div style={{width: '100%', textAlign: 'center', cursor: 'pointer'}}><DeleteOutlined /></div>
+            </Popconfirm>
+          ) : null,
+      }
     ];
 
     // result.push(
@@ -403,7 +403,6 @@ const InventoryFormTable = (props) => {
   });
 
   const onSelectChange = (selectedRowKeys,selectedRows) => {
-    console.log('selectedRowKeys changed: ', selectedRows);
     setSelectedRows(selectedRowKeys);
   };
 
