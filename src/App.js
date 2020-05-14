@@ -111,7 +111,7 @@ const App = (props) => {
     >
       <Switch>
         <PublicRoute restricted={true} exact path={'/login'} component={Login} />
-        <PrivateRoute exact path={'/products'} component={Products}/>
+        {/* <PrivateRoute exact path={'/products'} component={Products}/> */}
         <PrivateRoute exact path={'/'} component={Inventory}/>
         <PrivateRoute exact path={'/main'} component={Main}/>
         <PrivateRoute exact path={'/orders'} component={Orders}/>

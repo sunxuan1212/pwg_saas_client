@@ -6,14 +6,18 @@ import DefaultClientAPI from '../index';
 export const MIDDLETIER_URL = "http://localhost:3000/graphql";
 // export const MIDDLETIER_URL = "http://13.124.162.243/graphql";
 
+export const defaultImage_system = require("./noImageFound.png");
 export const defaultImage = "https://mananml-resources.s3-us-west-2.amazonaws.com/images/HANDROLLINGACCESSORIES/SMOKING60PAPER-RED-2304X1536.jpg";
 
 const handleConfigOuput = (config = null) => {
   let result = null;
   if (config) {
-    result = Object.assign({},config);
-    let defaultImage = config.defaultImage ? config.imageSrc + config.defaultImage : config.defaultImage_system
-    result['defaultImage'] = defaultImage;
+    result = {...config}
+    let newDefaultImage = defaultImage_system;
+    if (result.defaultImage && result.defaultImage != "") {
+      newDefaultImage = result.imageSrc + result.defaultImage;
+    }
+    result['defaultImage'] = newDefaultImage;
   }
   return result;
 }
@@ -89,7 +93,7 @@ export const setConfigCache = (data) => {
   DefaultClientAPI.client.writeQuery({
     query: SET_CONFIG_CACHE_QUERY,
     data: {
-      config: data
+      config: handleConfigOuput(data)
     }
   });
 }
@@ -162,7 +166,7 @@ export const useConfigQuery = (input) => {
     console.log('useConfigQuery',error);
   }
   if (data && data.userConfig) {
-    result = data.userConfig;
+    result = handleConfigOuput(data.userConfig);
   }
   return result;
 }

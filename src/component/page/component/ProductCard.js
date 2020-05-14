@@ -1,13 +1,13 @@
 import React from 'react';
 import { Tag, Tooltip } from 'antd';
-import { useConfigCache } from '../../../utils/Constants';
+import { useConfigCache, defaultImage_system } from '../../../utils/Constants';
 
 const ProductCard = (props) => {
   const { product } = props;
   const config = useConfigCache();
 
   const getProductImages = () => {
-    let srcResult = config.defaultImage_system;
+    let srcResult = config.defaultImage;
     if (product.images && product.images.length > 0) {
       let foundFavImage = product.images.find((anImage)=>anImage.fav);
       if (foundFavImage) {

@@ -389,11 +389,13 @@ const ProductInfoForm = (props) => {
   }
 
   const addNewCategory = () => {
-    setProductCategory([...productCategory, {
-      _id: `category_${newCategoryName}_${new Date().getTime()}`,
-      name: newCategoryName
-    }]);
-    setNewCategoryName('')
+    if (newCategoryName && newCategoryName != "") {
+      setProductCategory([...productCategory, {
+        _id: `category_${newCategoryName}_${new Date().getTime()}`,
+        name: newCategoryName
+      }]);
+      setNewCategoryName('')
+    }
   }
 
   const getModalFooter = () => {
@@ -483,13 +485,15 @@ const ProductInfoForm = (props) => {
                     {menu}
                     <Divider style={{ margin: '4px 0' }} />
                     <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
-                      <Input style={{ flex: 'auto' }} value={newCategoryName} onChange={onCategoryNameChange} required/>
-                      <a
-                        style={{ flex: 'none', padding: '8px', display: 'block', cursor: 'pointer' }}
+                      <Input style={{ flex: 'auto' }} value={newCategoryName} onChange={onCategoryNameChange} required={true}/>
+                      <Button
+                        type="link"
+                        icon={<PlusOutlined />}
                         onClick={addNewCategory}
+                        disabled={newCategoryName != "" ? false : true}
                       >
-                        <PlusOutlined /> New
-                      </a>
+                        New
+                      </Button>
                     </div>
                   </div>
                 )}
