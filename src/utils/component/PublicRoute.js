@@ -1,8 +1,10 @@
-import React, {useEffect} from 'react';
-import { Route, Redirect } from 'react-router-dom';
+import React from 'react';
+import { Route, Redirect, useLocation } from 'react-router-dom';
 import { useUserCache, useConfigCache } from '../Constants';
 
 const PublicRoute = ({ component: Component, restricted, ...rest }) => {
+  let routeLocation = useLocation();
+
   const defaultRoute = "/";
   const userResult = useUserCache();
   const configResult = useConfigCache();
@@ -17,7 +19,10 @@ const PublicRoute = ({ component: Component, restricted, ...rest }) => {
     // restricted = true meaning restricted route
     <Route {...rest} render={props => (
       loggedIn && restricted ?
-        <Redirect to={defaultRoute} />
+        <Redirect to={{
+            pathname: defaultRoute,
+            state: { from: routeLocation }
+        }} />
         : <Component {...props} />
     )} />
   );

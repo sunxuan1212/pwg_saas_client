@@ -1,11 +1,10 @@
 import React, {useState, useEffect} from 'react';
 import {
-  BrowserRouter,
+  BrowserRouter as Router,
   Route,
   Switch
 } from 'react-router-dom';
-import { useQuery, useLazyQuery } from "@apollo/react-hooks";
-import gql from "graphql-tag";
+import { Button } from "antd";
 
 import logo from './logo.svg';
 
@@ -22,77 +21,26 @@ import PrivateRoute from './utils/component/PrivateRoute';
 import PublicRoute from './utils/component/PublicRoute';
 import PageNotFound from './utils/component/PageNotFound';
 import Loading from './utils/component/Loading';
-import { setUserCache, setConfigCache, useUserCache, useConfigCache } from './utils/Constants';
+import { useConfigCache } from './utils/Constants';
 
 
 let Component_Layout = Component['Layout_01'];
 let Component_Header = Component['Header_01'];
 // let Component_Footer = Component['Header_01'];
 
-const GET_LOGGED_IN_USER = gql`
-  query loggedInUser{
-    loggedInUser{
-        success
-        message
-        data
-    }
-  }
-`
-
-const GET_USER_CONFIG = gql`
-  query userConfig($configId: String!) {
-    userConfig(configId: $configId) {
-        success
-        message
-        data
-    }
-  }
-`
-
 const App = (props) => {
   const [ loggedIn, setLoggedIn ] = useState(false);
-  const { data, error, loading, refetch } = useQuery(GET_LOGGED_IN_USER,{
-    fetchPolicy: 'cache-and-network',
-    onCompleted: (result) => {
-      if (result && result.loggedInUser && result.loggedInUser.success) {
-        // setUserCache(result.loggedInUser);
-        fetchConfig({
-          variables: {
-            configId: result.loggedInUser.data.configId
-          }
-        })
-      }
-    },
-    onError: (err) => {
-      console.log(err)
-      setLoggedIn(false)
-    }
-  });
-
-  const [ fetchConfig, { data: configData, error: configError, loading: configLoading }] = useLazyQuery(GET_USER_CONFIG,{
-    fetchPolicy: 'cache-and-network',
-    onCompleted: (result) => {
-      if (result && result.userConfig && result.userConfig.success) {
-        setConfigCache(result.userConfig.data)
-        setUserCache(data.loggedInUser);
-        setLoggedIn(true)
-
-      }
-    }
-  });
-
-  const userCache = useUserCache();
   const configCache = useConfigCache();
 
   useEffect(()=>{
-    if (userCache && userCache.success && configCache) {
+    if (configCache) {
       setLoggedIn(true)
     }
     else {
       setLoggedIn(false)
     }
-  },[userCache,configCache]);
-
+  },[configCache]);
+  
   const Main = () => {
     return (
       <div>
@@ -101,25 +49,25 @@ const App = (props) => {
     )
   }
 
-  if (loading || configLoading) return <Loading/>;
-  if (error) console.log(`error: ${error}`);
-
   return (
-    <Component_Layout
-      header={loggedIn ? (<Component_Header setLoggedIn={setLoggedIn}/>) : null}
-      footer={loggedIn ? "2020" : null}
-    >
-      <Switch>
-        <PublicRoute restricted={true} exact path={'/login'} component={Login} />
-        {/* <PrivateRoute exact path={'/products'} component={Products}/> */}
-        <PrivateRoute exact path={'/'} component={Inventory}/>
-        <PrivateRoute exact path={'/main'} component={Main}/>
-        <PrivateRoute exact path={'/orders'} component={Orders}/>
-        <PrivateRoute exact path={'/configuration'} component={Main}/>
-        <Route component={PageNotFound} />
-      </Switch>
-    </Component_Layout>
+    <Router>
+      <Component_Layout
+        header={loggedIn ? (<Component_Header/>) : null}
+        footer={loggedIn ? "2020" : null}
+      >
+        <Switch>
+          {/* <PrivateRoute exact path={'/products'} component={Products}/> */}
+          <PrivateRoute exact path={'/'} component={Inventory} />
+          <PrivateRoute exact path={'/main'} component={Main} />
+          <PrivateRoute exact path={'/orders'} component={Orders} />
+          <PrivateRoute exact path={'/configuration'} component={Main} />
+          <PublicRoute restricted={true} exact path={'/login'} component={Login} />
+          <Route component={PageNotFound} />
+        </Switch>
+      </Component_Layout>
+    </Router>
   )
+
 }
 
 export default App;

@@ -1,16 +1,19 @@
 import React from 'react';
 import { Route, Redirect, useLocation } from 'react-router-dom';
-import { useUserCache } from '../Constants';
+import { useUserCache, useConfigCache } from '../Constants';
 
 const PrivateRoute = ({ component: Component, ...rest }) => {
   let routeLocation = useLocation();
   const defaultRoute = "/login";
 
   const userResult = useUserCache();
+  const configResult = useConfigCache();
+  
   let loggedIn = false;
-  if (userResult && userResult.success) {
+  if (userResult && userResult.success && configResult) {
     loggedIn = true;
   }
+
   return (
     // Show the component only when the user is logged in
     // Otherwise, redirect the user to /signin page

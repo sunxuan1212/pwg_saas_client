@@ -7,7 +7,6 @@ export const MIDDLETIER_URL = "http://localhost:3000/graphql";
 // export const MIDDLETIER_URL = "http://13.124.162.243/graphql";
 
 export const defaultImage_system = require("./noImageFound.png");
-export const defaultImage = "https://mananml-resources.s3-us-west-2.amazonaws.com/images/HANDROLLINGACCESSORIES/SMOKING60PAPER-RED-2304X1536.jpg";
 
 const handleConfigOuput = (config = null) => {
   let result = null;
@@ -22,46 +21,8 @@ const handleConfigOuput = (config = null) => {
   return result;
 }
 
-const GET_USER_CONFIG_QUERY = gql`
-  query userConfig($configId: String!) {
-    userConfig(configId: $configId) {
-        success
-        message
-        data
-    }
-  }
-`
 
-const GET_CONFIG_CACHE_QUERY = gql`
-  query config {
-    config @client {
-      _id
-      configId
-      defaultImage
-      defaultImage_system
-      imageSrc
-      paymentQRImage
-      server
-      profile
-    }
-  }
-`
-
-const SET_CONFIG_CACHE_QUERY = gql`
-  query config {
-    config {
-      _id
-      configId
-      defaultImage
-      defaultImage_system
-      imageSrc
-      paymentQRImage
-      server
-      profile
-    }
-  }
-`
-
+// User Cache ---------------------------- start
 const GET_USER_CACHE_QUERY = gql`
   query user {
     user @client {
@@ -89,42 +50,6 @@ const SET_USER_CACHE_QUERY = gql`
   }
 `
 
-export const setConfigCache = (data) => {
-  DefaultClientAPI.client.writeQuery({
-    query: SET_CONFIG_CACHE_QUERY,
-    data: {
-      config: handleConfigOuput(data)
-    }
-  });
-}
-
-export const useConfigCache = () => {
-  const { data, error, loading } = useQuery(GET_CONFIG_CACHE_QUERY,{
-    fetchPolicy: 'cache-only'
-  });
-
-  let result = null;
-  if (loading) {
-    // console.log('loading');
-  }
-  if (error) {
-    console.log('useConfigCache',error);
-  }
-  if (data && data.config) {
-    result = data.config;
-  }
-  return result;
-}
-
-export const setUserCache = (data) => {
-  DefaultClientAPI.client.writeQuery({
-    query: SET_USER_CACHE_QUERY,
-    data: {
-      user: data
-    }
-  });
-}
-
 export const useUserCache = () => {
   const  { data, error, loading } = useQuery(GET_USER_CACHE_QUERY,{
     fetchPolicy: 'cache-only'
@@ -143,7 +68,139 @@ export const useUserCache = () => {
   return result;
 }
 
+export const setUserCache = (data, client=null) => {
+  let theClient = DefaultClientAPI.client;
+  if (client != null) {
+    theClient = client;
+  }
+  theClient.writeQuery({
+    query: SET_USER_CACHE_QUERY,
+    data: {
+      user: data
+    }
+  });
+  // theClient.writeData({
+  //   data: {
+  //     user: data
+  //   }
+  // });
+}
 
+// export const getUserCache = (client=null) => {
+//   let result = null;
+//   let theClient = DefaultClientAPI.client;
+//   if (client != null) {
+//     theClient = client;
+//   }
+//   try {
+//     result = theClient.readQuery({
+//       query: GET_USER_CACHE_QUERY
+//     },true)
+//   }
+//   catch (e) {
+//     result = null;
+//   }
+
+//   return result;
+// }
+
+
+// User Cache ---------------------------- end
+// Config Cache ---------------------------- start
+const GET_USER_CONFIG_QUERY = gql`
+  query userConfig($configId: String!) {
+    userConfig(configId: $configId) {
+        success
+        message
+        data
+    }
+  }
+`
+const GET_CONFIG_CACHE_QUERY = gql`
+  query config {
+    config @client {
+      _id
+      configId
+      defaultImage
+      defaultImage_system
+      imageSrc
+      paymentQRImage
+      server
+      profile {
+        name
+      }
+    }
+  }
+`
+const SET_CONFIG_CACHE_QUERY = gql`
+  query config {
+    config {
+      _id
+      configId
+      defaultImage
+      defaultImage_system
+      imageSrc
+      paymentQRImage
+      server
+      profile {
+        name
+      }
+    }
+  }
+`
+export const useConfigCache = () => {
+  const { data, error, loading } = useQuery(GET_CONFIG_CACHE_QUERY,{
+    fetchPolicy: 'cache-only'
+  });
+
+  let result = null;
+  if (loading) {
+    // console.log('loading');
+  }
+  if (error) {
+    console.log('useConfigCache',error);
+  }
+  if (data && data.config) {
+    result = data.config;
+  }
+  return result;
+}
+
+export const setConfigCache = (data, client=null) => {
+  let theClient = DefaultClientAPI.client;
+  if (client != null) {
+    theClient = client;
+  }
+  theClient.writeQuery({
+    query: GET_CONFIG_CACHE_QUERY,
+    data: {
+      config: handleConfigOuput(data)
+    }
+  });
+  // theClient.writeData({
+  //   data: {
+  //     config: handleConfigOuput(data)
+  //   }
+  // });
+}
+
+// export const getConfigCache = (client=null) => {
+//   let result = null;
+//   let theClient = DefaultClientAPI.client;
+//   if (client != null) {
+//     theClient = client;
+//   }
+//   try {
+//     result = theClient.readQuery({
+//       query: SET_CONFIG_CACHE_QUERY
+//     },true) 
+//   }
+//   catch (e) {
+//     result = null;
+//   }
+
+//   return result;
+// }
 
 export const useConfigQuery = (input) => {
   // const [ getConfig, { data, error, loading } ] = useLazyQuery(GET_USER_CONFIG_QUERY,{
@@ -170,6 +227,8 @@ export const useConfigQuery = (input) => {
   }
   return result;
 }
+// Config Cache ---------------------------- end
+
 
 // const GET_LOGGED_IN_USER = gql`
 //   query loggedInUser{

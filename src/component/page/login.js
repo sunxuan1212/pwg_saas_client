@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLazyQuery, useMutation } from "@apollo/react-hooks";
+import { useLazyQuery, useMutation, useApolloClient } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import { Form, Input, Button, Checkbox } from 'antd';
 import { useHistory } from "react-router-dom";
@@ -28,7 +28,6 @@ const GET_USER_CONFIG_QUERY = gql`
   }
 `
 
-
 const layout = {
   labelCol: {
     span: 8,
@@ -46,7 +45,7 @@ const tailLayout = {
 
 const Login = (props) => {
   let routeHistory = useHistory();
-  const [login, { data, loading}] = useMutation(LOGIN_MUTATION,{
+  const [login, { data, loading }] = useMutation(LOGIN_MUTATION,{
     onCompleted: (result)=>{
       if (result && result.login && result.login.success) {
         let redirectPath = '/';
@@ -58,7 +57,6 @@ const Login = (props) => {
             configId: result.login.data.configId
           }
         })
-        // setUserCache(result.login)
         // routeHistory.push(redirectPath)
       }
       else {
@@ -68,14 +66,14 @@ const Login = (props) => {
   });
 
   const [ fetchConfig ] = useLazyQuery(GET_USER_CONFIG_QUERY,{
-      fetchPolicy: 'cache-and-network',
-      onCompleted: (result2) => {
-        if (result2 && result2.userConfig && result2.userConfig.success) {
-          setConfigCache(result2.userConfig.data)
-          setUserCache(data.login)
-        }
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (result2) => {
+      if (result2 && result2.userConfig && result2.userConfig.success) {
+        setConfigCache(result2.userConfig.data)
+        setUserCache(data.login)
       }
-    });
+    }
+  });
 
   const onFinish = values => {
     login({
@@ -86,6 +84,7 @@ const Login = (props) => {
   const onFinishFailed = errorInfo => {
     console.log('Failed:', errorInfo);
   };
+
   return (
     <div id="page_login">
       <Form

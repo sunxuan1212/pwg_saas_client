@@ -11,7 +11,7 @@ import {
   LogoutOutlined
 } from '@ant-design/icons';
 import confirmation from '../../utils/component/confirmation';
-import { useConfigCache } from '../../utils/Constants';
+import { useConfigCache, setConfigCache, setUserCache } from '../../utils/Constants';
 
 const LOGOUT_MUTATION = gql`
     mutation logout {
@@ -23,24 +23,9 @@ const LOGOUT_MUTATION = gql`
     }
 `;
 
-const LOGGEDIN_USER_STATE = gql`
-  {
-    user @client {
-      success
-      message
-      data {
-        _id
-        username
-        configId
-      } 
-    }
-  }
-`;
-
 const Header_01 = (props) => {
   const apolloClient = useApolloClient();
   let routeHistory = useHistory();
-  // const [config , setConfig] = useState(null);
   const config = useConfigCache();
   const [logout] = useMutation(LOGOUT_MUTATION, {
     onCompleted: (result) => {
@@ -51,17 +36,12 @@ const Header_01 = (props) => {
         // }
         
         apolloClient.resetStore().then(()=>{
-          props.setLoggedIn(false);
-          routeHistory.push(redirectPath)
+          setConfigCache(null)
+          setUserCache(null)
+          // routeHistory.push(redirectPath)
 
         })
         // apolloClient.clearStore()
-        // apolloClient.writeData({
-        //   data: {
-        //     user: null,
-        //     config: null
-        //   }
-        // })
       }
     }
   });
