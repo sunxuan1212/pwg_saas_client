@@ -4,9 +4,8 @@ import { format } from 'date-fns';
 
 import { useConfigCache } from '../../../utils/Constants';
 
-
 const OrderInfo = (props) => {
-  const { order, closeModal, visible, ... restProps } = props;
+  const { order, closeModal, visible, ...restProps } = props;
   const config = useConfigCache();
 
   const orderItems = (item) => {
@@ -38,6 +37,7 @@ const OrderInfo = (props) => {
       </List.Item>
     )
   }
+
   return (
     <Modal
       title={"Order"}
@@ -89,10 +89,25 @@ const OrderInfo = (props) => {
           //bordered
           footer={(
             <div className="orderInfo-item-summary">
-              Total: {order.total}
+              <Descriptions 
+                bordered={true}
+                size="small"
+                column={{ xxl: 1, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 }}
+                style={{maxWidth:"100%"}}
+              >
+                <Descriptions.Item label={"邮费"}>{order.deliveryFee ? order.deliveryFee : 0}</Descriptions.Item>
+                <Descriptions.Item label="总计">{order.total}</Descriptions.Item>
+              </Descriptions>
             </div>
           )}
         />
+        {
+          order.sentOut && order.trackingNum ? (
+            <div style={{textAlign:'center'}}>
+              <iframe src={`https://m.kuaidi100.com/app/query/?coname=indexall&nu=${order.trackingNum}`} style={{border:'none', maxWidth:'400px', height: '600px', textAlign:'center'}}></iframe>
+            </div>
+          ) : null
+        }
       </React.Fragment>
       : "Not found"
     }

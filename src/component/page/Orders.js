@@ -7,13 +7,14 @@ import { CheckOutlined } from '@ant-design/icons';
 
 import Page_01 from './component/Page_01';
 import OrderInfo from './component/OrderInfo';
+import { useConfigCache } from '../../utils/Constants';
 
 const { TabPane } = Tabs;
 const { Search } = Input;
 
 const GET_ORDERS_QUERY = gql`
-  query orders($filter: JSONObject) {
-    orders(filter: $filter) {
+  query orders($filter: JSONObject, $configId: String) {
+    orders(filter: $filter, configId: $configId) {
       _id
       createdAt
       updatedAt
@@ -57,7 +58,7 @@ const CANCEL_ORDER_QUERY = gql`
   }
 `;
 const Orders = (props) => {
-
+  const configCache = useConfigCache();
   const [ orderModalDisplay, setOrderModalDisplay ] = useState(false);
   const [ selectedOrder, setSelectedOrder ] = useState(null);
 
@@ -68,7 +69,8 @@ const Orders = (props) => {
         sorter: {
           createdAt: 'desc'
         },
-      }
+      },
+      configId: configCache.configId
     },
     onError: (error) => {
       console.log("products error", error)

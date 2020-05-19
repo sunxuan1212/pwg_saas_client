@@ -1,11 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useApolloClient } from "@apollo/react-hooks";
+import React, { useState } from 'react';
+import { useMutation, useApolloClient } from "@apollo/react-hooks";
 import gql from "graphql-tag";
-import {
-  useHistory
-} from "react-router-dom";
-import { NavHashLink as NavLink } from 'react-router-hash-link';
-import { Menu, Divider, Button, Tooltip } from 'antd';
+import { useHistory } from "react-router-dom";
+import { Menu, Button, Tooltip } from 'antd';
 import {
   ArrowLeftOutlined,
   LogoutOutlined
