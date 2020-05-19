@@ -67,7 +67,7 @@ const Orders = (props) => {
       filter: {
         sorter: {
           createdAt: 'desc'
-        }
+        },
       }
     },
     onError: (error) => {

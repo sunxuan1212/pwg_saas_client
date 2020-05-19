@@ -9,10 +9,11 @@ import {
 import ProductForm from './component/ProductForm';
 import ProductCard from './component/ProductCard';
 import Loading from '../../utils/component/Loading';
+import { useConfigCache } from '../../utils/Constants';
 
 const GET_PRODUCTS_QUERY = gql`
-  query products($filter: JSONObject) {
-    products(filter: $filter) {
+  query products($filter: JSONObject, $configId: String) {
+    products(filter: $filter, configId: $configId) {
       _id
       createdAt
       updatedAt
@@ -30,10 +31,11 @@ const Products = (props) => {
   const [ productFormModal, setProductFormModal ] = useState(false);
   const [ selectedProduct, setSelectedProduct ] = useState(null);
 
+  const configCache = useConfigCache();
   const { data, loading, error, refetch } = useQuery(GET_PRODUCTS_QUERY, {
     fetchPolicy: "cache-and-network",
     variables: {
-
+      configId: configCache.configId
     },
     onError: (error) => {
       console.log("products error", error)

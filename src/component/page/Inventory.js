@@ -10,10 +10,12 @@ import { format } from 'date-fns';
 import Page_01 from './component/Page_01';
 import Loading from '../../utils/component/Loading';
 import ProductForm from './component/ProductForm';
+import { useConfigCache } from '../../utils/Constants';
+
 
 const GET_PRODUCTS_QUERY = gql`
-  query products($filter: JSONObject) {
-    products(filter: $filter) {
+  query products($filter: JSONObject, $configId: String) {
+    products(filter: $filter, configId: $configId) {
       _id
       createdAt
       updatedAt
@@ -28,8 +30,8 @@ const GET_PRODUCTS_QUERY = gql`
 `;
 
 const READ_PRODUCT_INVENTORY_QUERY = gql`
-  query inventory($filter: JSONObject) {
-    inventory(filter: $filter) {
+  query inventory($filter: JSONObject, $configId: String) {
+    inventory(filter: $filter, configId: $configId) {
       _id
       createdAt
       updatedAt
@@ -84,6 +86,7 @@ const Inventory = (props) => {
   const [ selectedItems, setSelectedItems ] = useState([]);
   const [ displaySelectionPanel, setDisplaySelectionPanel ] = useState(false);
 
+  const configCache = useConfigCache();
   const { data: productsData, loading, error, refetch: refetchProducts } = useQuery(GET_PRODUCTS_QUERY, {
     fetchPolicy: "cache-and-network",
     variables: {
@@ -92,6 +95,7 @@ const Inventory = (props) => {
       //     createdAt: 1
       //   }
       // }
+      configId: configCache.configId
     },
     onError: (error) => {
       console.log("products error", error)
@@ -104,6 +108,9 @@ const Inventory = (props) => {
 
   const { data: inventoryData, loading: inventoryLoading, error: inventoryError, refetch: refetchInventory } = useQuery(READ_PRODUCT_INVENTORY_QUERY, {
     fetchPolicy: "cache-and-network",
+    variables: {
+      configId: configCache.configId
+    },
     onError: (error) => {
       console.log("inventoryData error", error)
     },

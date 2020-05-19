@@ -15,8 +15,8 @@ const { Panel } = Collapse;
 const { Option } = Select;
 
 const READ_PRODUCT_INVENTORY_QUERY = gql`
-  query inventory($filter: JSONObject) {
-    inventory(filter: $filter) {
+  query inventory($filter: JSONObject, $configId: String) {
+    inventory(filter: $filter, configId: $configId) {
       _id
       createdAt
       updatedAt
@@ -136,7 +136,7 @@ function getBase64(file) {
 
 const ProductInfoForm = (props) => {
   const {product = null, categories, refetch, ...modalProps} = props;
-  const config = useConfigCache();
+  const configCache = useConfigCache();
   const fileLimit = 4;
 
   const [ form ] = Form.useForm();
@@ -171,11 +171,12 @@ const ProductInfoForm = (props) => {
         variables: {
           filter: {
             filter: { productId: product._id }
-          }
+          },
+          configId: configCache.configId
         }
       });
       if (product.images && product.images.length > 0) {
-        setFileList(getDefaultImageArray(product.images, config));
+        setFileList(getDefaultImageArray(product.images, configCache));
       }
     }
     else {
@@ -292,7 +293,7 @@ const ProductInfoForm = (props) => {
     if (!values._id) {
       delete finalProductValue._id;
     }
-    
+
     if (values.category) {
       let foundSelectedCategory = productCategory.find(aCategory=>aCategory._id == values.category.key);
       if (foundSelectedCategory) {
@@ -434,7 +435,7 @@ const ProductInfoForm = (props) => {
   // const editImageOutput = (image) => {
   //   if (image) {
   //     const QiniuAPI = qiniuAPI();
-  //     let imageSrc = config.imageSrc;
+  //     let imageSrc = configCache.imageSrc;
   //     var imgLink = QiniuAPI.imageMogr2({
   //       "auto-orient": true,      // 布尔值，是否根据原图EXIF信息自动旋正，便于后续处理，建议放在首位。
   //       strip: true,              // 布尔值，是否去除图片中的元信息
@@ -490,7 +491,7 @@ const ProductInfoForm = (props) => {
                         type="link"
                         icon={<PlusOutlined />}
                         onClick={addNewCategory}
-                        disabled={newCategoryName != "" ? false : true}
+                        disabled={newCategoryName.trim() != "" ? false : true}
                       >
                         New
                       </Button>

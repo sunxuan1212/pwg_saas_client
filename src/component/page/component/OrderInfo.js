@@ -14,7 +14,7 @@ const OrderInfo = (props) => {
     let variant = "";
     let variantKeys = Object.keys(item.variant);
     variantKeys.map((aKey, index)=>{
-      variant += `${aKey}: ${item.variant[aKey]}${index == variantKeys.length -1 ? "" : ", "}`
+      variant += `${item.variant[aKey].name}: ${item.variant[aKey].value}${index == variantKeys.length -1 ? "" : ", "}`
     })
 
     let imageSrc = "";
@@ -76,8 +76,10 @@ const OrderInfo = (props) => {
             column={{ xxl: 1, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 }}
         >
             <Descriptions.Item label="名字">{order.customer.name}</Descriptions.Item>
-            <Descriptions.Item label="电话号码">contact</Descriptions.Item>
-            <Descriptions.Item label="收件地址">address</Descriptions.Item>
+            <Descriptions.Item label="电话号码">{order.customer.contact}</Descriptions.Item>
+            <Descriptions.Item label="收件地址">{order.customer.address}</Descriptions.Item>
+            <Descriptions.Item label="邮编">{order.customer.postcode}</Descriptions.Item>
+            <Descriptions.Item label="省份">{order.customer.province}</Descriptions.Item>
         </Descriptions>
         <Divider orientation="left">购买列表</Divider> 
         <List
