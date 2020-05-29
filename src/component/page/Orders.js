@@ -3,7 +3,7 @@ import { Tabs, Table, Button, Input, Popconfirm } from 'antd';
 import { format } from 'date-fns';
 import gql from "graphql-tag";
 import { useQuery, useMutation } from "@apollo/react-hooks";
-import { CheckOutlined } from '@ant-design/icons';
+import { CheckOutlined, RedoOutlined } from '@ant-design/icons';
 
 import Page_01 from './component/Page_01';
 import OrderInfo from './component/OrderInfo';
@@ -24,6 +24,7 @@ const GET_ORDERS_QUERY = gql`
       paid
       sentOut
       trackingNum
+      deliveryFee
     }
   }
 `;
@@ -67,7 +68,7 @@ const Orders = (props) => {
     variables: {
       filter: {
         sorter: {
-          createdAt: 'desc'
+          createdAt: -1
         },
       },
       configId: configCache.configId
@@ -77,7 +78,7 @@ const Orders = (props) => {
 
     },
     onCompleted: (result) => {
-      
+      console.log('Orders', result.orders)
     }
   });
 
@@ -235,12 +236,12 @@ const Orders = (props) => {
         width: 200,
         render: (text, record) => {
           let result = null;
-          if (record.sentOut && text) {
-            result = (
-              <div>{text}</div>
-            )
-          }
-          else {
+          // if (record.sentOut && text) {
+          //   result = (
+          //     <div>{text}</div>
+          //   )
+          // }
+          // else {
             const handleUpdateDelivery = (value) => {
               updateOrderDelivery({
                 variables: {
@@ -253,11 +254,12 @@ const Orders = (props) => {
               <Search
                 placeholder="Enter tracking no."
                 enterButton={(<CheckOutlined />)}
+                defaultValue={text}
                 size="small"
                 onSearch={handleUpdateDelivery}
               />
             )
-          }
+          // }
           return result;
         } 
       }
@@ -321,9 +323,9 @@ const Orders = (props) => {
   return (
     <Page_01
       title={"Orders"}
-      //extra={[
-      //  <Button key="create" type="primary" icon={<PlusOutlined />} />
-      //]}
+      extra={[
+        <Button key="refresh" type="primary" icon={<RedoOutlined />} onClick={()=>{refetchOrders()}}/>
+      ]}
     >
       <Tabs defaultActiveKey="1">
         <TabPane tab="New Orders" key="1">

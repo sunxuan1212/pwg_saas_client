@@ -73,11 +73,11 @@ const Header_01 = (props) => {
       icon: null,
       route: '/orders'
     },
-    // {
-    //   name: 'Configuration',
-    //   icon: null,
-    //   route: '/configuration'
-    // }
+    {
+      name: 'Configuration',
+      icon: null,
+      route: '/configuration'
+    }
   ]
 
   const getMenuItemDisplay = () => {

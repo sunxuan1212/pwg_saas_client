@@ -15,6 +15,7 @@ import Login from './component/page/Login';
 import Products from './component/page/Products';
 import Inventory from './component/page/Inventory';
 import Orders from './component/page/Orders';
+import Configuration from './component/page/Configuration';
 import Page_01 from './component/page/component/Page_01';
 
 import PrivateRoute from './utils/component/PrivateRoute';
@@ -60,7 +61,7 @@ const App = (props) => {
           <PrivateRoute exact path={'/'} component={Inventory} />
           <PrivateRoute exact path={'/main'} component={Main} />
           <PrivateRoute exact path={'/orders'} component={Orders} />
-          <PrivateRoute exact path={'/configuration'} component={Main} />
+          <PrivateRoute exact path={'/configuration'} component={Configuration} />
           <PublicRoute restricted={true} exact path={'/login'} component={Login} />
           <Route component={PageNotFound} />
         </Switch>

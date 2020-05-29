@@ -6,19 +6,20 @@ import { useConfigCache } from '../../../utils/Constants';
 
 const OrderInfo = (props) => {
   const { order, closeModal, visible, ...restProps } = props;
-  const config = useConfigCache();
+  const configCache = useConfigCache();
 
   const orderItems = (item) => {
     let title = item.product.name;
     let variant = "";
+    console.log('item',item)
     let variantKeys = Object.keys(item.variant);
     variantKeys.map((aKey, index)=>{
       variant += `${item.variant[aKey].name}: ${item.variant[aKey].value}${index == variantKeys.length -1 ? "" : ", "}`
     })
 
     let imageSrc = "";
-    if (config && item.product.image) {
-      imageSrc = config.imageSrc + item.product.image;
+    if (configCache && item.product.image) {
+      imageSrc = configCache.imageSrc + item.product.image;
     }
     return (
       <List.Item
@@ -101,13 +102,21 @@ const OrderInfo = (props) => {
             </div>
           )}
         />
+        <div className="orderInfo-extra">
+          {configCache.paymentQRImage ? 
+            <div style={{textAlign:'center',flexGrow:1}}>
+              <img src={configCache.imageSrc + configCache.paymentQRImage} />
+            </div>
+            : null
+          }
         {
           order.sentOut && order.trackingNum ? (
-            <div style={{textAlign:'center'}}>
+            <div style={{textAlign:'center',flexGrow:1}}>
               <iframe src={`https://m.kuaidi100.com/app/query/?coname=indexall&nu=${order.trackingNum}`} style={{border:'none', maxWidth:'400px', height: '600px', textAlign:'center'}}></iframe>
             </div>
           ) : null
         }
+        </div>
       </React.Fragment>
       : "Not found"
     }

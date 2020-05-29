@@ -1,10 +1,11 @@
 import React, {useState, useEffect} from 'react';
 import { Button, Form, Input, Upload, Modal, Switch, Collapse, Select, Divider } from 'antd';
-import { useLazyQuery, useMutation, useApolloClient } from "@apollo/react-hooks";
+import { useLazyQuery, useMutation } from "@apollo/react-hooks";
 import { PlusOutlined, StarOutlined, StarFilled } from '@ant-design/icons';
 import gql from "graphql-tag";
 
 import confirmation from '../../../utils/component/confirmation';
+import { showMessage } from '../../../utils/component/notification';
 import InventoryFormTable from './InventoryFormTable';
 
 import qiniuAPI from '../../../utils/qiniuAPI';
@@ -25,16 +26,6 @@ const READ_PRODUCT_INVENTORY_QUERY = gql`
       variants
       published
       productId
-    }
-  }
-`;
-
-const BULK_UPDATE_INVENTORY_QUERY = gql`
-  mutation bulkUpdateInventory($inventory: [JSONObject!]) {
-    bulkUpdateInventory(inventory: $inventory) {
-      success
-      message
-      data
     }
   }
 `;
@@ -60,8 +51,8 @@ const DELETE_PRODUCT_QUERY = gql`
 `;
 
 const UPDATE_PRODUCT_QUERY = gql`
-  mutation updateProduct($product: JSONObject!) {
-    updateProduct(product: $product) {
+  mutation updateProduct($product: JSONObject!, $inventory: [JSONObject!]) {
+    updateProduct(product: $product, inventory: $inventory) {
       success
       message
       data
@@ -146,37 +137,41 @@ const ProductInfoForm = (props) => {
 
   // inventory
   const [ inventoryData, setInventoryData ] = useState([]);
-  const [ productCategory, setProductCategory ] = useState(categories);
+  const [ productCategory, setProductCategory ] = useState([]);
   const [ newCategoryName, setNewCategoryName ] = useState('');
   const [ productVariants, setProductVariants ] = useState({'sku': 'SKU'});
 
   useEffect(() => {
-    if (product && modalProps.modalVisible) {
-      let productObj = Object.assign({},product);
-      if (product.category && product.category.length > 0) {
-        let newCategoryFormat = product.category.map((aCategory)=>{
-          return {
-            key: aCategory._id,
-            label: aCategory.name
-          }
-        })
-        productObj['category'] = newCategoryFormat;
-      }
-      form.setFieldsValue(productObj);
-      if (product.variants) {
-        setProductVariants(product.variants)
-      }
+    if (modalProps.modalVisible) {
+      setProductCategory(categories)
 
-      readInventory({
-        variables: {
-          filter: {
-            filter: { productId: product._id }
-          },
-          configId: configCache.configId
+      if (product) {
+        let productObj = Object.assign({},product);
+        if (product.category && product.category.length > 0) {
+          let newCategoryFormat = product.category.map((aCategory)=>{
+            return {
+              key: aCategory._id,
+              label: aCategory.name
+            }
+          })
+          productObj['category'] = newCategoryFormat[0];
         }
-      });
-      if (product.images && product.images.length > 0) {
-        setFileList(getDefaultImageArray(product.images, configCache));
+        form.setFieldsValue(productObj);
+        if (product.variants) {
+          setProductVariants(product.variants)
+        }
+  
+        readInventory({
+          variables: {
+            filter: {
+              filter: { productId: product._id }
+            },
+            configId: configCache.configId
+          }
+        });
+        if (product.images && product.images.length > 0) {
+          setFileList(getDefaultImageArray(product.images, configCache));
+        }
       }
     }
     else {
@@ -184,7 +179,7 @@ const ProductInfoForm = (props) => {
     }
     modalProps.setModalFooter(getModalFooter());
     
-  }, [product, modalProps.modalVisible]);
+  }, [modalProps.modalVisible]);
 
   const uploadButton = (
     <div>
@@ -238,7 +233,7 @@ const ProductInfoForm = (props) => {
     setPreviewVisible(false);
   }
 
-  const [readInventory, readInventoryResult ] = useLazyQuery(READ_PRODUCT_INVENTORY_QUERY,{
+  const [ readInventory, readInventoryResult ] = useLazyQuery(READ_PRODUCT_INVENTORY_QUERY,{
     fetchPolicy: "cache-and-network",
     onCompleted: (result) => {
       if (result && result.inventory) {
@@ -254,23 +249,20 @@ const ProductInfoForm = (props) => {
     }
   })
 
-  const [bulkUpdateInventory] = useMutation(BULK_UPDATE_INVENTORY_QUERY,{
-    onCompleted: (result) => {
-      // console.log("bulkUpdateInventory result",result)
-    }
-  })
-
   const [createProduct, createProductResult ] = useMutation(CREATE_NEW_PRODUCT_QUERY,{
     onCompleted: (result) => {
       // console.log("createProduct result",result)
       modalProps.onCancel();
       refetch();
+      showMessage({type: 'success', message: 'Success: Product Created'});
+
     }
   })
   const [deleteProduct] = useMutation(DELETE_PRODUCT_QUERY,{
     onCompleted: (result) => {
       // console.log("deleteProduct result",result)
       modalProps.onCancel();
+      showMessage({type: 'success', message: 'Success: Product deleted'});
       refetch();
     }
   })
@@ -279,13 +271,16 @@ const ProductInfoForm = (props) => {
       // console.log("updateProduct result",result)
       modalProps.onCancel();
       refetch();
+      showMessage({type: 'success', message: 'Success: Product Updated'});
     }
   })
 
   const onFinish = async (values) => {
-    
+// console.log('onFinish',values)
+    const { images, category, ...restValues } = values;
     let finalProductValue = {
-      ...values,
+      ...restValues,
+      category: [],
       images: [], 
       variants: productVariants
     }
@@ -294,19 +289,18 @@ const ProductInfoForm = (props) => {
       delete finalProductValue._id;
     }
 
+    // handle category
     if (values.category) {
       let foundSelectedCategory = productCategory.find(aCategory=>aCategory._id == values.category.key);
-      if (foundSelectedCategory) {
+      if (foundSelectedCategory && foundSelectedCategory._id) {
         finalProductValue['category'] = [foundSelectedCategory];
       }
     }
-    else {
-      finalProductValue['category'] = [];
-    }
 
+    // handle images
     let imagesToBeModified = getImageFilesToModify(product && product.images ? product.images : [], fileList);
     // if (imagesToBeModified.upload.length > 0 || imagesToBeModified.delete.length > 0) {
-      finalProductValue['images'] = imagesToBeModified.allImages;
+    finalProductValue['images'] = imagesToBeModified.allImages;
     // }
 
     const QiniuAPI = await qiniuAPI();
@@ -320,6 +314,7 @@ const ProductInfoForm = (props) => {
       await QiniuAPI.batchDelete(imagesToBeModified.delete.map(anImage=>anImage.name))
     }
 
+
     if (!product) {
       createProduct({
         variables: {
@@ -329,13 +324,9 @@ const ProductInfoForm = (props) => {
     }
     else {
 
-      updateProduct({
-        variables: {
-          product: {...finalProductValue, _id: product._id}
-        }
-      })
-
       let newInventory = [...inventoryData];
+
+      // handle variant
       newInventory = newInventory.map((anInventory)=>{
         const { key, ...restInventory} = anInventory;
 
@@ -350,6 +341,8 @@ const ProductInfoForm = (props) => {
         restInventory['variants'] = variantObj;
         return restInventory;
       });
+
+      // handle deleted inventory
       let deletedInventory = []
       if (readInventoryResult.data && readInventoryResult.data.inventory) {
         readInventoryResult.data.inventory.map((anInventory)=>{
@@ -360,13 +353,12 @@ const ProductInfoForm = (props) => {
         })
       } 
 
-      bulkUpdateInventory(
-        {
-          variables: {
-            inventory: newInventory.concat(deletedInventory)
-          }
+      updateProduct({
+        variables: {
+          product: {...finalProductValue, _id: product._id},
+          inventory: newInventory.concat(deletedInventory)
         }
-      )
+      })
 
     }
   }
@@ -449,6 +441,12 @@ const ProductInfoForm = (props) => {
   // }
   return (
     <div id="productForm">
+    {/* <Button onClick={()=>{
+      console.log('category',categories)
+      console.log('inv',inventoryData)
+      console.log('productVariants',productVariants)
+      }}>inventoryData</Button> */}
+
       <Collapse 
         defaultActiveKey={['1','2']} 
         //bordered={false}
@@ -524,7 +522,8 @@ const ProductInfoForm = (props) => {
                   //  showDownloadIcon: true,
                   //  downloadIcon: <StarFilled style={{color: 'yellow'}}/>
                   //}}
-                  className={'productForm-upload'}                >
+                  className={'productForm-upload'}
+                >
                   {fileList.length < fileLimit ? uploadButton : null}
                 </Upload>
                 <Modal 

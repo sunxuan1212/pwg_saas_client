@@ -4,9 +4,29 @@ import gql from "graphql-tag";
 import DefaultClientAPI from '../index';
 
 export const MIDDLETIER_URL = "http://localhost:3000/graphql";
-// export const MIDDLETIER_URL = "http://13.124.162.243/graphql";
+// export const MIDDLETIER_URL = "http://15.165.150.23/graphql";
 
 export const defaultImage_system = require("./noImageFound.png");
+
+
+export const getAllProductCategory = (products) => {
+  let result = [];
+  products.map((aProduct)=>{
+    if (aProduct.category && aProduct.category.length > 0) {
+      aProduct.category.map((aCategory)=>{
+        // let catKeys = Object.keys(aCategory)
+        // if (catKeys.indexOf('key') >= 0) {
+        //   console.log('aProduct', aProduct.name)
+        // }
+        let foundPushedItem = result.find((anItem)=>anItem._id == aCategory._id);
+        if (!foundPushedItem) {
+          result.push(aCategory);
+        }
+      })
+    }
+  });
+  return result;
+}
 
 const handleConfigOuput = (config = null) => {
   let result = null;
@@ -20,7 +40,6 @@ const handleConfigOuput = (config = null) => {
   }
   return result;
 }
-
 
 // User Cache ---------------------------- start
 const GET_USER_CACHE_QUERY = gql`
@@ -128,7 +147,9 @@ const GET_CONFIG_CACHE_QUERY = gql`
       server
       profile {
         name
+        notice
       }
+      delivery
     }
   }
 `
@@ -144,7 +165,9 @@ const SET_CONFIG_CACHE_QUERY = gql`
       server
       profile {
         name
+        notice
       }
+      delivery
     }
   }
 `

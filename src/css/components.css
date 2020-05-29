@@ -20,6 +20,7 @@
   width: 100%;
   font-size: 32px;
   background-color: rgba(255,255,255,0.4);
+  z-index: 999;
 }
 
 #page_01 {
@@ -55,4 +56,19 @@
 .orderInfo-item-summary {
   display: flex;
   justify-content: flex-end;
+}
+
+.orderInfo-extra {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.orderInfo-extra > div {
+  flex: 1 1 50%;
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.orderInfo-extra > div > img {
+  width: 100%;
 }

@@ -1,17 +1,19 @@
 import React, {useState, useEffect} from 'react';
 import { useQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
-import { Button, Table, Tag, message } from 'antd';
+import { Button, Table, Tag, Select, Form } from 'antd';
 import {
-  PlusOutlined
+  PlusOutlined,
+  RedoOutlined
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 
 import Page_01 from './component/Page_01';
 import Loading from '../../utils/component/Loading';
 import ProductForm from './component/ProductForm';
-import { useConfigCache } from '../../utils/Constants';
+import { useConfigCache, getAllProductCategory } from '../../utils/Constants';
 
+const { Option } = Select;
 
 const GET_PRODUCTS_QUERY = gql`
   query products($filter: JSONObject, $configId: String) {
@@ -64,21 +66,6 @@ const UPDATE_INVENTORY_PUBLISH = gql`
   }
 `;
 
-const getAllProductCategory = (products) => {
-  let result = [];
-  products.map((aProduct)=>{
-    if (aProduct.category && aProduct.category.length > 0) {
-      aProduct.category.map((aCategory)=>{
-        let foundPushedItem = result.find((anItem)=>anItem._id == aCategory._id);
-        if (!foundPushedItem) {
-          result.push(aCategory);
-        }
-      })
-    }
-  });
-  return result;
-}
-
 const Inventory = (props) => {
   const [ productFormModal, setProductFormModal ] = useState(false);
   const [ selectedProduct, setSelectedProduct ] = useState(null);
@@ -86,15 +73,17 @@ const Inventory = (props) => {
   const [ selectedItems, setSelectedItems ] = useState([]);
   const [ displaySelectionPanel, setDisplaySelectionPanel ] = useState(false);
 
+  const [ selectedCategoryFilter, setSelectedCategoryFilter ] = useState("");
+
   const configCache = useConfigCache();
   const { data: productsData, loading, error, refetch: refetchProducts } = useQuery(GET_PRODUCTS_QUERY, {
     fetchPolicy: "cache-and-network",
     variables: {
-      // filter: {
-      //   sorter: {
-      //     createdAt: 1
-      //   }
-      // }
+      filter: {
+        sorter: {
+          createdAt: 1
+        }
+      },
       configId: configCache.configId
     },
     onError: (error) => {
@@ -102,7 +91,7 @@ const Inventory = (props) => {
 
     },
     onCompleted: (result) => {
-      
+      // console.log('refetched products', result)
     }
   });
 
@@ -115,7 +104,7 @@ const Inventory = (props) => {
       console.log("inventoryData error", error)
     },
     onCompleted: (result) => {
-      // console.log('inventoryData', result)
+      // console.log('refetched inventory', result)
     }
   });
 
@@ -296,10 +285,15 @@ const Inventory = (props) => {
         })
       }
     }
+
+    const clearSelection = () => {
+      setSelectedItems([])
+    }
     return (
       <div style={{display: 'flex'}}>
         <Button type="primary" size="small" onClick={updateToPublish} style={{marginRight: '5px'}} disabled={!displaySelectionPanel}>Publish</Button>
-        <Button size="small" onClick={updateToUnpublish} disabled={!displaySelectionPanel}>Unpublish</Button>
+        <Button size="small" onClick={updateToUnpublish} style={{marginRight: '5px'}} disabled={!displaySelectionPanel}>Unpublish</Button>
+        <Button size="small" onClick={clearSelection}>Cancel</Button>
       </div>
     )
   }
@@ -315,13 +309,36 @@ const Inventory = (props) => {
     onSelectAll: (selected, selectedRows, changeRows) => {
       // console.log(selected, selectedRows, changeRows);
     },
+    selectedRowKeys: selectedItems.map((anItem)=>anItem._id)
   };
+
+  const filterProductByCategory = (products) => {
+    let result = [];
+    if (selectedCategoryFilter != "" && selectedCategoryFilter != 'none') {
+      result = products.filter((aProduct)=>{
+        let found = aProduct.category.find((aCategory)=>{return aCategory._id == selectedCategoryFilter})
+        if (found) {
+          return true;
+        }
+        return false;
+      })
+    } 
+    else if (selectedCategoryFilter == 'none') {
+      result = products.filter((aProduct)=>{
+        return aProduct.category.length == 0;
+      })
+    }
+    else {
+      result = products;
+    }
+    return result;
+  }
 
   const getTableData = () => {
     let result = [];
     if (productsData && inventoryData && !error && !inventoryError) {
       let inventoryWithKey = inventoryData.inventory.map((anInventory)=>{ return {...anInventory, key: anInventory._id} });
-      productsData.products.map((aProduct,index)=>{
+      filterProductByCategory(productsData.products).map((aProduct,index)=>{
         let productInventory = inventoryWithKey.filter((anInventory)=>anInventory.productId == aProduct._id);
         aProduct['key'] = aProduct._id;
         if (productInventory.length > 0) {
@@ -334,18 +351,41 @@ const Inventory = (props) => {
   }
 
   let hasSelected = selectedItems.length > 0 ? true : false;
+  let allCategories = productsData && productsData.products ? getAllProductCategory(productsData.products) : []
+  let tableData = getTableData()
 
   return (
     <Page_01
       title={"Inventory"}
       extra={[
+        <Button key="refresh" type="primary" icon={<RedoOutlined />} onClick={()=>{refetchData()}}/>,
         <Button key="create" type="primary" icon={<PlusOutlined />} onClick={()=>{handleOnClickProduct(null)}} />
       ]}
     >
+      {/* <Form.Item label={'Filter'}> */}
+        <Select
+          placeholder="Category"
+          onChange={(value)=>{
+            setSelectedCategoryFilter(value)
+          }}
+          defaultValue={selectedCategoryFilter}
+          style={{minWidth: '35%', marginBottom: '24px'}}
+        >
+          <Option key={'all'} value={""}>All</Option>  
+          {
+            allCategories.map((aCategory,index)=>{
+              return (
+                <Option key={index} value={aCategory._id}>{aCategory.name}</Option>
+              )
+            })
+          }
+          <Option key={'none'} value={"none"}>Without Category</Option>  
+        </Select>
+      {/* </Form.Item> */}
       <Table 
         columns={columns} 
         rowSelection={rowSelection} 
-        dataSource={getTableData()} 
+        dataSource={tableData} 
         pagination={false}
         scroll={{x: columns.length * 150}}
         size={'small'}
@@ -357,7 +397,7 @@ const Inventory = (props) => {
       <ProductForm
         // product props
         product={selectedProduct} 
-        categories={productsData && productsData.products ? getAllProductCategory(productsData.products) : []}
+        categories={allCategories}
         refetch={refetchData}
 
         // modal props
