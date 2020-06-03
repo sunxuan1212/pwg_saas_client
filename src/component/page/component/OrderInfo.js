@@ -12,12 +12,11 @@ const OrderInfo = (props) => {
     let title = item.product.name;
     let variant = "";
     console.log('item',item)
-    if (item.variant) {
-      let variantKeys = Object.keys(item.variant);
-      variantKeys.map((aKey, index)=>{
-        variant += `${item.variant[aKey].name}: ${item.variant[aKey].value}${index == variantKeys.length -1 ? "" : ", "}`
-      })
-    }
+    let variantKeys = Object.keys(item.variant);
+    variantKeys.map((aKey, index)=>{
+      variant += `${item.variant[aKey].name}: ${item.variant[aKey].value}${index == variantKeys.length -1 ? "" : ", "}`
+    })
+
     let imageSrc = "";
     if (configCache && item.product.image) {
       imageSrc = configCache.imageSrc + item.product.image;

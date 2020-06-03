@@ -12,7 +12,6 @@ import Page_01 from './component/Page_01';
 import Loading from '../../utils/component/Loading';
 import ProductForm from './component/ProductForm';
 import { useConfigCache, getAllProductCategory } from '../../utils/Constants';
-import qiniuAPI from '../../utils/qiniuAPI';
 
 const { Option } = Select;
 
@@ -355,32 +354,10 @@ const Inventory = (props) => {
   let allCategories = productsData && productsData.products ? getAllProductCategory(productsData.products) : []
   let tableData = getTableData()
 
-  const getAllImagesName = async () => {
-    let allImages = [];
-    if (productsData && productsData.products && productsData.products.length > 0) {
-      productsData.products.map((aProduct)=>{
-        if (aProduct.images && aProduct.images.length > 0) {
-          aProduct.images.map((anImage)=>{
-            allImages.push(anImage.name)
-          })
-        }
-      })
-    }
-    console.log('getAllImagesName',allImages)
-    const QiniuAPI = await qiniuAPI();
-
-    if (allImages.length > 0) {
-      let x = await QiniuAPI.batchCopy(allImages);
-      console.log('copy result', x)
-    }
-
-
-  }
   return (
     <Page_01
       title={"Inventory"}
       extra={[
-        //<Button key="copy" onClick={getAllImagesName}>copy image</Button>,
         <Button key="refresh" type="primary" icon={<RedoOutlined />} onClick={()=>{refetchData()}}/>,
         <Button key="create" type="primary" icon={<PlusOutlined />} onClick={()=>{handleOnClickProduct(null)}} />
       ]}
@@ -429,21 +406,6 @@ const Inventory = (props) => {
       />
     </Page_01>
   )
-
-//   {
-//     "Version": "2012-10-17",
-//     "Statement": [
-//         {
-//             "Sid": "PublicReadGetObject",
-//             "Effect": "Allow",
-//             "Principal": {
-//                 "AWS": "*"
-//             },
-//             "Action": "s3:GetObject",
-//             "Resource": "arn:aws:s3:::store.mananml.shop/*"
-//         }
-//     ]
-// }
 }
 
 export default Inventory;

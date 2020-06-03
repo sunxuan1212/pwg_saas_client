@@ -3,8 +3,8 @@ import gql from "graphql-tag";
 
 import DefaultClientAPI from '../index';
 
-// export const MIDDLETIER_URL = "http://localhost:3000/graphql";
-export const MIDDLETIER_URL = "http://15.165.150.23/graphql";
+export const MIDDLETIER_URL = "http://localhost:3000/graphql";
+// export const MIDDLETIER_URL = "http://15.165.150.23/graphql";
 
 export const defaultImage_system = require("./noImageFound.png");
 
