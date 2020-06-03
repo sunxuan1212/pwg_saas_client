@@ -32,6 +32,16 @@ const QINIU_BATCH_DELETE_QUERY = gql`
   }
 `;
 
+const QINIU_BATCH_COPY_QUERY = gql`
+  mutation qiniuBatchCopy($images: [String!]) {
+    qiniuBatchCopy(images: $images) {
+      success
+      message
+      data
+    }
+  }
+`;
+
 const qiniuAPI = async (loadToken = true) => {
   const apolloClient = ApolloClientAPI();
   let qiniuToken = "";
@@ -135,6 +145,18 @@ const qiniuAPI = async (loadToken = true) => {
     batchDelete: async (images) => {
       return new Promise((resolve, reject) => {
         apolloClient.mutation(QINIU_BATCH_DELETE_QUERY,{
+          images: images
+        })
+        .then(result=>resolve(result))
+        .catch(err=>{
+          console.log(err);
+          reject(err)
+        });
+      })
+    },
+    batchCopy: async (images) => {
+      return new Promise((resolve, reject) => {
+        apolloClient.mutation(QINIU_BATCH_COPY_QUERY,{
           images: images
         })
         .then(result=>resolve(result))
